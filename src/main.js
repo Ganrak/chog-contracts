@@ -764,7 +764,7 @@ $('#selfpay').addEventListener('submit', async (e) => {
 });
 $('#selfpay').addEventListener('click', (e) => {
   const c = e.target.closest('[data-copy]'); if (!c || !spChallenge) return;
-  navigator.clipboard?.writeText(spChallenge.wallet).then(() => { c.textContent = 'Copied'; setTimeout(() => { c.textContent = 'Copy'; }, 1500); }).catch(() => {});
+  navigator.clipboard?.writeText(c.dataset.copy === 'amount' ? spChallenge.amount : spChallenge.wallet).then(() => { c.textContent = 'Copied'; setTimeout(() => { c.textContent = 'Copy'; }, 1500); }).catch(() => {});
 });
 $('#sp-check').addEventListener('click', async () => {
   if (!spChallenge) return;

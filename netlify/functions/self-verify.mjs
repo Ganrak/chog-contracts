@@ -2,7 +2,7 @@
 // POST /api/self-verify { wallet }                   → { challenge, amount, wei, expires }
 // POST /api/self-verify { wallet, challenge, tx }    → { pass, week }
 // The MON never leaves your wallet (to === from); only gas is spent. Being able to move funds out of an address
-// proves you hold its keys as well as a signature does. Each challenge has its own amount and a 20-minute window,
+// proves you hold its keys as well as a signature does. Each challenge has its own amount and a 5-minute window,
 // and a transaction can be used only once. The pass stands in for the weekly signature until the week ends.
 import { getStore } from '@netlify/blobs';
 import { randomInt } from 'node:crypto';

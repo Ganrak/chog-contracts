@@ -36,7 +36,7 @@ export function unseal(token, kind) {
   if (t.kind !== kind) throw new Error('bad token');
   return t;
 }
-export const CHALLENGE_LIFE = 20 * 60 * 1000; // the self-transfer has to be made within 20 minutes
+export const CHALLENGE_LIFE = 5 * 60 * 1000; // the self-transfer has to be made within 5 minutes
 export const makePass = (wallet) => seal({ kind: 'pass', w: wallet.toLowerCase(), week: weekId() });
 // a wallet is proven for this week by its weekly signature, or by a pass from a self-transfer
 export async function provenWallet({ wallet, week, signature, pass }, verifyMessage, lbMessage) {
