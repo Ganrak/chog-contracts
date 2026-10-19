@@ -1,0 +1,13 @@
+{
+  "name": "chog-contracts",
+  "private": true,
+  "type": "module",
+  "description": "Chog Contracts: the leaderboard functions' dependencies (the site itself needs no build).",
+  "scripts": {
+    "test:replay": "node scripts/test-replay.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "viem": "^2.21.0"
+  }
+}

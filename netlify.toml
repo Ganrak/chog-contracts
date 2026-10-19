@@ -1,0 +1,8 @@
+# The site is the ./site folder made by scripts/build.ps1; the leaderboard runs as Netlify Functions.
+# Deploy: scripts\build.ps1, then: npx netlify-cli deploy --prod
+[build]
+  publish = "site"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

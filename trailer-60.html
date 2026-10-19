@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chog Contracts · 60s clip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Koulen&family=Inter:wght@400;600;700&family=Grenze+Gotisch:wght@700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+  :root{color-scheme:dark}
+  html,body{margin:0; height:100%; background:#07050b; color:#f4f1fe; font:500 14px/1.4 "Inter", system-ui, sans-serif}
+  body{display:flex; flex-direction:column; align-items:center; min-height:100%}
+  canvas{display:block; max-width:100vw; max-height:calc(100vh - 64px); aspect-ratio:16/9; width:100%; height:auto; background:#000}
+  .bar{display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; padding:12px 16px}
+  button{border:0; border-radius:12px; padding:11px 18px; background:linear-gradient(135deg,#a99bfc,#836ef9 55%,#6f52e8); color:#fff; font:700 12px/1 "JetBrains Mono", monospace; letter-spacing:.08em; text-transform:uppercase; cursor:pointer}
+  button.ghost{background:#17121f; border:1px solid rgba(255,255,255,.14)}
+  button:disabled{opacity:.5; cursor:wait}
+  .out{display:flex; flex-direction:column; align-items:center; gap:10px; padding:0 16px 24px} .out[hidden]{display:none}
+  .out video{width:min(640px, 92vw); border-radius:12px; border:1px solid rgba(255,255,255,.15)}
+  .dl{background:none; border:0; cursor:pointer; color:#ffd66b; font:700 13px/1 "JetBrains Mono", monospace; letter-spacing:.06em; text-transform:uppercase}
+  #msg{font:600 12px/1.3 "JetBrains Mono", monospace; color:#b9adff; min-width:220px}
+</style>
+</head>
+<body>
+<canvas id="cv" width="1280" height="720" aria-label="Chog Contracts, a 60 second clip"></canvas>
+<div class="bar">
+  <button type="button" id="play" class="ghost">Restart</button>
+  <button type="button" id="make">Make MP4 video</button>
+  <span id="msg" aria-live="polite">Plays on a loop. Record makes a video file.</span>
+</div>
+<div class="out" id="out" hidden>
+  <video controls playsinline></video>
+  <button type="button" class="dl" id="dl">Download video</button>
+</div>
+<script>
+// A 60-second clip of the site, drawn on a canvas from the game's own art:
+// the gate and its WANTED poster → FUD post on X → monster → your Chog → the fight → bounty and renting → the room
+// → traits become moves → the painted arenas → the weekly boss leaderboard → what we never do → logo.
+const W = 1280, H = 720, LEN = 60;
+const OFF = 5; // the original beats run 5 s later, after the gate
+const cv = document.getElementById('cv'), c = cv.getContext('2d');
+const PINK = '#e845a4', PURPLE = '#836ef9', LILAC = '#a99bfc', GOLD = '#ffd66b';
+const load = (src) => new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const ease = (t) => 1 - Math.pow(1 - clamp(t), 3);           // ease-out cubic
+const back = (t) => { t = clamp(t); const s = 1.7; return 1 + (s + 1) * Math.pow(t - 1, 3) + s * Math.pow(t - 1, 2); };
+const span = (t, a, b) => clamp((t - a) / (b - a));           // 0→1 across [a,b]
+const fade = (t, a, b, f = 0.4) => Math.min(span(t, a, a + f), 1 - span(t, b - f, b)); // in at a, out at b
+const DISPLAY = '"Koulen", Impact, sans-serif', MONO = '"JetBrains Mono", monospace', BODY = '"Inter", sans-serif', GOTH = '"Grenze Gotisch", Georgia, serif';
+
+let A = {};
+const embers = Array.from({ length: 70 }, (_, i) => ({ x: Math.random() * W, y: Math.random() * H, v: 12 + Math.random() * 30, r: 0.6 + Math.random() * 2, p: Math.random() * 6 }));
+
+function text(s, x, y, { font = DISPLAY, size = 64, color = '#fff', align = 'center', alpha = 1, stroke = null, lw = 0, spacing = 0, shadow = 0 } = {}) {
+  c.save(); c.globalAlpha *= alpha; c.font = `${size}px ${font}`; c.textAlign = align; c.textBaseline = 'middle';
+  if ('letterSpacing' in c) c.letterSpacing = `${spacing}px`;
+  if (shadow) { c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = shadow; c.shadowOffsetY = shadow / 3; }
+  if (stroke) { c.lineWidth = lw; c.strokeStyle = stroke; c.lineJoin = 'round'; c.strokeText(s, x, y); }
+  if (color) { c.fillStyle = color; c.fillText(s, x, y); }
+  c.restore();
+}
+function rr(x, y, w, h, r) { c.beginPath(); c.roundRect(x, y, w, h, r); }
+function img(im, x, y, w, h, alpha = 1) { if (!im) return; c.save(); c.globalAlpha *= alpha; c.drawImage(im, x, y, w, h); c.restore(); }
+function cover(im, s = 1, ox = 0, oy = 0) { if (!im) return; const k = Math.max(W / im.width, H / im.height) * s; c.drawImage(im, (W - im.width * k) / 2 + ox, (H - im.height * k) / 2 + oy, im.width * k, im.height * k); }
+function glow(x, y, r, col, a) { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'transparent'); c.save(); c.globalAlpha = a; c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2); c.restore(); }
+
+function backdrop(t, dt) {
+  const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0b0815'); g.addColorStop(0.6, '#1d1430'); g.addColorStop(1, '#2a1838');
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+  glow(W * 0.5, H * 0.55, 520, 'rgba(131,110,249,.35)', 0.9);
+  for (const e of embers) {
+    e.y -= e.v * dt; e.p += dt; if (e.y < -10) { e.y = H + 10; e.x = Math.random() * W; }
+    c.fillStyle = `rgba(255,${150 + (e.r * 30) | 0},70,${0.25 + 0.5 * Math.abs(Math.sin(e.p))})`;
+    c.beginPath(); c.arc(e.x + Math.sin(e.p) * 6, e.y, e.r, 0, Math.PI * 2); c.fill();
+  }
+}
+
+/* ---------- the beats ---------- */
+const POST = 'monad is a ghost chain and $CHOG goes to zero';
+const HOT = ['ghost chain', 'zero'];
+function beatPost(t) { // 0–5.6: a post on X types itself out, the FUD words light up
+  const a = fade(t, 0, 5.6, 0.5); if (a <= 0) return;
+  const crack = span(t, 4.7, 5.6), shake = crack > 0 ? Math.sin(t * 90) * 8 * crack : 0;
+  c.save(); c.globalAlpha = a; c.translate(W / 2 + shake, H / 2 - 10); c.scale(1 - crack * 0.15, 1 - crack * 0.15);
+  text('SOMEONE ON X SAYS…', 0, -170, { font: MONO, size: 22, color: LILAC, spacing: 6, alpha: span(t, 0.2, 0.8) });
+  rr(-430, -110, 860, 230, 24); c.fillStyle = '#16121f'; c.fill(); c.strokeStyle = 'rgba(255,255,255,.12)'; c.lineWidth = 2; c.stroke();
+  c.fillStyle = '#3a3150'; c.beginPath(); c.arc(-375, -55, 26, 0, Math.PI * 2); c.fill();
+  text('anon', -335, -66, { font: BODY, size: 22, color: '#fff', align: 'left' }); text('@anon · just now', -335, -40, { font: BODY, size: 17, color: '#8a84a3', align: 'left' });
+  // typed text, then the FUD words get a pink highlight
+  const n = Math.floor(POST.length * span(t, 0.7, 3.2)), shown = POST.slice(0, n);
+  c.font = `600 34px ${BODY}`; c.textBaseline = 'middle'; c.textAlign = 'left';
+  const x0 = -385, y0 = 35, lit = span(t, 3.5, 4.0);
+  if (lit > 0) for (const w of HOT) { const i = POST.indexOf(w); if (i < 0 || i >= n) continue; const x = x0 + c.measureText(POST.slice(0, i)).width, ww = c.measureText(w).width; c.save(); c.globalAlpha = lit * 0.45; c.fillStyle = PINK; rr(x - 4, y0 - 22, (ww + 8) * lit, 44, 8); c.fill(); c.restore(); }
+  c.fillStyle = '#f4f1fe'; c.fillText(shown, x0, y0);
+  if (n < POST.length && Math.floor(t * 3) % 2 === 0) { c.fillStyle = PINK; c.fillRect(x0 + c.measureText(shown).width + 4, y0 - 18, 3, 36); }
+  // cracks
+  if (crack > 0) { c.strokeStyle = `rgba(255,255,255,${crack})`; c.lineWidth = 3; c.beginPath(); c.moveTo(60, -110); c.lineTo(20, -30); c.lineTo(70, 20); c.lineTo(10, 120); c.moveTo(20, -30); c.lineTo(-60, 0); c.stroke(); }
+  c.restore();
+  if (crack > 0.8) { c.fillStyle = `rgba(255,255,255,${(crack - 0.8) * 4})`; c.fillRect(0, 0, W, H); }
+}
+function beatMonster(t) { // 5.6–9.6: the post becomes a monster
+  const a = fade(t, 5.6, 9.6, 0.3); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  const rise = back(span(t, 5.6, 6.6)), mx = W / 2, my = H * 0.6 + (1 - rise) * 260;
+  glow(mx, my - 40, 330, 'rgba(226,51,61,.45)', 1);
+  const s = 430 + Math.sin(t * 2.4) * 8; img(A.wyrm, mx - s / 2, my - s * 0.62, s, s);
+  const ta = span(t, 6.4, 6.9);
+  text('FUD IS A MONSTER.', W / 2, 110, { size: 104, color: '#fff', alpha: ta, spacing: 2, shadow: 18 });
+  text('THE GREAT FUD WYRM', W / 2, H - 70, { font: GOTH, size: 40, color: '#ffd2d6', alpha: span(t, 6.9, 7.4) });
+  c.restore();
+}
+function chogCard(x, y, s, im, name, col) {
+  c.save(); c.translate(x, y); c.rotate(-0.04);
+  c.shadowColor = col; c.shadowBlur = 40; rr(-s / 2 - 8, -s / 2 - 8, s + 16, s + 16, 26); c.fillStyle = col; c.fill(); c.shadowBlur = 0;
+  c.save(); rr(-s / 2, -s / 2, s, s, 20); c.clip(); if (im) c.drawImage(im, -s / 2, -s / 2, s, s); c.restore();
+  if (name) text(name, 0, s / 2 + 44, { size: 40, color: '#fff' });
+  c.restore();
+}
+const LX = 330, RX = 950, CY = 330;
+function beatVs(t) { // 9.6–13.4: your Chog steps in
+  const a = fade(t, 9.6, 13.4, 0.3); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  const inL = back(span(t, 9.7, 10.5));
+  glow(RX, CY + 20, 300, 'rgba(226,51,61,.35)', 1); glow(LX, CY + 20, 300, 'rgba(255,138,31,.35)', 1);
+  img(A.wyrm, RX - 190, CY - 200, 380, 380);
+  chogCard(LX - (1 - inL) * 700, CY, 280, A.c812, 'CHOG #812', '#FF8A1F');
+  const vs = back(span(t, 10.4, 10.9)); if (vs > 0) { c.save(); c.translate(W / 2, CY); c.scale(vs, vs); text('VS', 0, 0, { size: 120, color: PINK, shadow: 30 }); c.restore(); }
+  const ta = span(t, 11.0, 11.5);
+  text('YOUR CHOG HUNTS IT.', W / 2, 640, { size: 84, color: null, stroke: LILAC, lw: 3, alpha: ta, spacing: 2 });
+  c.restore();
+}
+// the fight: the Chog charges, dashes straight through the monster, and slices it in two
+const MX = 760, MY = 360, MS = 430;                 // the monster: centre and size
+const CUT = -0.62, DX = Math.cos(CUT), DY = Math.sin(CUT), NX = -DY, NY = DX; // the cut runs up and to the right
+const DASH = 14.7, SLASH = 15.05, SPLIT = 15.9;    // charge ends, the blade lands, the halves fall apart
+const bits = Array.from({ length: 46 }, () => ({ a: Math.random() * Math.PI * 2, v: 180 + Math.random() * 520, r: 1.5 + Math.random() * 3.5, h: Math.random() < 0.5 }));
+function half(sign, sep, spin, alpha) { // one side of the cut, pushed away along the cut's normal
+  c.save(); c.globalAlpha *= alpha;
+  c.translate(MX + NX * sign * sep + DX * sign * sep * 0.35, MY + NY * sign * sep + DY * sign * sep * 0.35);
+  c.rotate(spin * sign);
+  const L = 900; c.beginPath();
+  c.moveTo(-DX * L, -DY * L); c.lineTo(DX * L, DY * L); c.lineTo(DX * L + NX * L * sign, DY * L + NY * L * sign); c.lineTo(-DX * L + NX * L * sign, -DY * L + NY * L * sign);
+  c.closePath(); c.clip();
+  img(A.wyrm, -MS / 2, -MS * 0.55, MS, MS);
+  c.restore();
+}
+function beatFight(t) { // 13.4–19.6
+  const a = fade(t, 13.4, 19.6, 0.3); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  const hit = span(t, SLASH, SLASH + 0.45); // screen shake right after the cut
+  if (hit > 0 && hit < 1) c.translate((Math.random() - 0.5) * 26 * (1 - hit), (Math.random() - 0.5) * 26 * (1 - hit));
+  // floor
+  const fg = c.createRadialGradient(W / 2, H - 110, 40, W / 2, H - 110, 640); fg.addColorStop(0, '#3b2e4f'); fg.addColorStop(1, 'transparent');
+  c.fillStyle = fg; c.beginPath(); c.ellipse(W / 2, H - 110, 620, 110, 0, 0, Math.PI * 2); c.fill();
+  // the monster: whole, then two halves sliding apart
+  const sp = span(t, SPLIT, SPLIT + 1.4), fall = sp * sp;
+  if (t < SPLIT) {
+    const roar = t < DASH ? 1 + Math.sin(t * 9) * 0.015 : 1;
+    glow(MX, MY, 300, 'rgba(226,51,61,.4)', 1);
+    c.save(); c.translate(MX, MY); c.scale(roar, roar); img(A.wyrm, -MS / 2, -MS * 0.55, MS, MS); c.restore();
+  } else {
+    half(1, 14 + fall * 260, fall * 0.35, 1 - span(t, SPLIT + 0.9, SPLIT + 1.6));
+    half(-1, 14 + fall * 260, fall * 0.35, 1 - span(t, SPLIT + 0.9, SPLIT + 1.6));
+  }
+  // the Chog: charges up on the left, then a dash through the monster with a motion trail, lands on the right
+  const d = span(t, DASH, SLASH), de = d * d * d, x0 = 250, x1 = 1110;
+  const cx = x0 + (x1 - x0) * de, cy = 360 - Math.sin(d * Math.PI) * 40;
+  if (t < DASH) { const ch = span(t, 13.6, DASH); glow(x0, 360, 160 + ch * 140, `rgba(255,138,31,${0.35 + ch * 0.4})`, 1); }
+  if (d > 0 && d < 1) for (let k = 5; k >= 1; k--) { const dk = clamp(d - k * 0.06), xk = x0 + (x1 - x0) * dk * dk * dk; c.save(); c.globalAlpha *= 0.12 * (6 - k); chogCard(xk, 360, 210, A.c812, '', '#FF8A1F'); c.restore(); }
+  const shake = t < DASH ? Math.sin(t * 70) * 4 * span(t, 14.0, DASH) : 0;
+  chogCard(cx + shake, cy, d > 0 && d < 1 ? 210 : 240, A.c812, t > SLASH + 0.6 ? 'CHOG #812' : '', '#FF8A1F');
+  // the blade: one bright line across the monster, drawn in a blink, then fading
+  const ln = span(t, SLASH, SLASH + 0.12), lf = 1 - span(t, SLASH + 0.5, SPLIT + 0.6);
+  if (ln > 0 && lf > 0) {
+    const L = 340 * ln;
+    c.save(); c.globalCompositeOperation = 'lighter'; c.lineCap = 'round'; c.globalAlpha *= lf;
+    c.strokeStyle = 'rgba(232,69,164,.85)'; c.lineWidth = 26; c.beginPath(); c.moveTo(MX - DX * L, MY - DY * L); c.lineTo(MX + DX * L, MY + DY * L); c.stroke();
+    c.strokeStyle = '#fff'; c.lineWidth = 7; c.beginPath(); c.moveTo(MX - DX * L, MY - DY * L); c.lineTo(MX + DX * L, MY + DY * L); c.stroke();
+    c.restore();
+  }
+  if (t > SLASH && t < SLASH + 0.12) { c.fillStyle = `rgba(255,255,255,${0.8 * (1 - span(t, SLASH, SLASH + 0.12))})`; c.fillRect(-40, -40, W + 80, H + 80); }
+  // sparks out of the cut
+  const sk = span(t, SPLIT, SPLIT + 1.2);
+  if (sk > 0 && sk < 1) for (const b of bits) { const r = b.v * sk; c.fillStyle = b.h ? `rgba(255,214,107,${1 - sk})` : `rgba(232,69,164,${1 - sk})`; c.beginPath(); c.arc(MX + Math.cos(b.a) * r, MY + Math.sin(b.a) * r + sk * sk * 120, b.r, 0, Math.PI * 2); c.fill(); }
+  // health bar: full, then gone in one hit
+  const hp = t < SLASH + 0.15 ? 1 : 1 - span(t, SLASH + 0.15, SLASH + 0.5);
+  c.save(); rr(MX - 200, 64, 400, 22, 11); c.fillStyle = 'rgba(0,0,0,.5)'; c.fill(); if (hp > 0) { rr(MX - 200, 64, 400 * hp, 22, 11); c.fillStyle = '#d02a35'; c.fill(); } c.restore();
+  text('THE GREAT FUD WYRM', MX, 40, { font: GOTH, size: 28, color: '#ffd2d6', alpha: 1 - span(t, SPLIT + 0.8, SPLIT + 1.3) });
+  if (t < DASH) text('CHARGING…', x0, 520, { font: MONO, size: 22, color: '#ffb36b', spacing: 6, alpha: span(t, 13.7, 14.0) });
+  const one = span(t, SLASH + 0.2, SLASH + 0.5);
+  if (one > 0) text('ONE HIT', MX, 150, { font: MONO, size: 26, color: GOLD, spacing: 8, alpha: one * (1 - span(t, SPLIT + 1.0, SPLIT + 1.4)) });
+  // the line people screenshot
+  const big = back(span(t, SPLIT + 1.0, SPLIT + 1.45));
+  if (big > 0) { c.save(); c.translate(W / 2 - 40, 380); c.scale(big, big); text('FUD.', -170, 0, { size: 170, color: '#fff', shadow: 30 }); text('SLICED.', 190, 0, { size: 170, color: null, stroke: PINK, lw: 5 }); c.restore(); }
+  c.restore();
+}
+function beatBounty(t) { // 19.6–23.8: the $CHOG bounty, and renting
+  const a = fade(t, 19.6, 23.8, 0.3); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  glow(W / 2, 270, 420, 'rgba(255,214,107,.32)', 1);
+  const n = Math.round(4450 * ease(span(t, 19.8, 21.0)) / 10) * 10;
+  const pop = back(span(t, 19.7, 20.2));
+  c.save(); c.translate(W / 2, 250); c.scale(pop, pop); text(`+${n.toLocaleString('en-US')}`, 0, 0, { size: 190, color: GOLD, shadow: 26 }); c.restore();
+  text('$CHOG BOUNTY', W / 2, 380, { font: MONO, size: 28, color: '#fff', spacing: 8, alpha: span(t, 20.2, 20.6) });
+  const r = span(t, 21.3, 21.8);
+  c.save(); c.globalAlpha *= r; c.translate(0, (1 - r) * 30);
+  rr(W / 2 - 430, 450, 860, 150, 22); c.fillStyle = 'rgba(255,214,107,.1)'; c.fill(); c.fillStyle = GOLD; c.fillRect(W / 2 - 430, 450, 6, 150);
+  text('NO TIME? RENT YOUR CHOG OUT.', W / 2, 500, { size: 54, color: '#fff' });
+  text('It hunts for other players. You get 30% of every bounty.', W / 2, 560, { font: BODY, size: 26, color: '#d6d0ea' });
+  c.restore();
+  c.restore();
+}
+function beatRoom(t) { // 23.8–27.4: the room, its story
+  const a = fade(t, 23.8, 27.4, 0.35); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  cover(A.room, 1.04 + span(t, 23.8, 27.4) * 0.06, -span(t, 23.8, 27.4) * 30, 0);
+  const sh = c.createLinearGradient(0, 0, 0, H); sh.addColorStop(0, 'rgba(7,5,11,.75)'); sh.addColorStop(0.35, 'rgba(7,5,11,0)'); sh.addColorStop(0.75, 'rgba(7,5,11,0)'); sh.addColorStop(1, 'rgba(7,5,11,.85)');
+  c.fillStyle = sh; c.fillRect(0, 0, W, H);
+  if (A.kid) { const k = back(span(t, 24.0, 24.7)), hgt = 360, wid = hgt * A.kid.width / A.kid.height; c.save(); c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 24; c.drawImage(A.kid, 470 - wid / 2, H - 70 - hgt * k + Math.sin(t * 3) * 4, wid, hgt * k); c.restore(); }
+  text('IT HAS A ROOM. A JOURNAL. SCARS.', W / 2, 80, { size: 66, color: '#fff', alpha: span(t, 24.1, 24.6), shadow: 18 });
+  text('Expeditions, trophies, a story that stays with the NFT.', W / 2, H - 60, { font: BODY, size: 28, color: '#e8e3f6', alpha: span(t, 24.8, 25.3), shadow: 10 });
+  c.restore();
+}
+/* ---------- new beats for the 60 s cut ---------- */
+// a running LED light around a rounded box, like the site's tab bar and Enter button
+function led(x, y, w, h, r, t, speed = 2.6) {
+  c.save(); rr(x, y, w, h, r);
+  const g = c.createConicGradient((t / speed) * Math.PI * 2, x + w / 2, y + h / 2);
+  g.addColorStop(0, 'transparent'); g.addColorStop(0.62, 'transparent'); g.addColorStop(0.72, 'rgba(255,255,255,.95)'); g.addColorStop(0.8, PINK); g.addColorStop(0.86, GOLD); g.addColorStop(0.94, 'transparent'); g.addColorStop(1, 'transparent');
+  c.strokeStyle = g; c.lineWidth = 3; c.shadowColor = PINK; c.shadowBlur = 12; c.stroke(); c.restore();
+}
+function beatGate(t) { // 0–5: the gate, a WANTED poster for the boss, the glowing Enter button gets pressed
+  const a = fade(t, 0, 5, 0.4); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  const zoom = 1 + span(t, 3.6, 5) * 0.5; c.translate(W / 2, H / 2); c.scale(zoom, zoom); c.translate(-W / 2, -H / 2);
+  // the arch and the door
+  glow(W / 2, 330, 380, 'rgba(131,110,249,.45)', 1);
+  c.save(); c.beginPath(); c.moveTo(470, 640); c.lineTo(470, 260); c.arc(640, 260, 170, Math.PI, 0); c.lineTo(810, 640); c.closePath();
+  c.fillStyle = '#3a2c22'; c.fill(); c.lineWidth = 26; c.strokeStyle = '#4a4458'; c.stroke(); c.clip();
+  for (let i = 0; i < 6; i++) { c.fillStyle = i % 2 ? '#5a3d28' : '#634430'; c.fillRect(470 + i * 57, 80, 55, 600); }
+  c.fillStyle = '#2a1d14'; c.fillRect(470, 360, 340, 14); c.fillRect(470, 520, 340, 14);
+  // light through the opening crack
+  const open = span(t, 3.4, 4.6); if (open > 0) { const gw = 340 * open; const lg = c.createLinearGradient(640 - gw / 2, 0, 640 + gw / 2, 0); lg.addColorStop(0, 'rgba(255,214,107,0)'); lg.addColorStop(0.5, `rgba(255,240,200,${open})`); lg.addColorStop(1, 'rgba(255,214,107,0)'); c.fillStyle = lg; c.fillRect(640 - gw / 2, 80, gw, 600); }
+  c.restore();
+  // WANTED poster
+  const pin = back(span(t, 0.5, 1.1));
+  c.save(); c.translate(700, 300); c.rotate(0.06); c.scale(pin, pin);
+  c.fillStyle = '#efe2c2'; c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 16; c.fillRect(-70, -95, 140, 190); c.shadowBlur = 0;
+  text('WANTED', 0, -76, { font: DISPLAY, size: 30, color: '#3a2216' });
+  img(A.wyrm, -52, -60, 104, 104);
+  text('ESCAPES IN 3D 12H', 0, 62, { font: MONO, size: 11, color: '#8a2a2a', spacing: 1 });
+  text('5,000 $CHOG', 0, 80, { font: DISPLAY, size: 18, color: '#3a2216' });
+  c.restore();
+  c.restore();
+  // the Enter button with the running LED, then a press
+  c.save(); c.globalAlpha = a * span(t, 1.2, 1.7);
+  const press = t > 3.1 && t < 3.4 ? 0.94 : 1;
+  c.translate(W / 2, 670); c.scale(press, press);
+  rr(-150, -30, 300, 60, 30); const bg = c.createLinearGradient(-150, 0, 150, 0); bg.addColorStop(0, LILAC); bg.addColorStop(1, PURPLE); c.fillStyle = bg; c.fill();
+  led(-153, -33, 306, 66, 33, t);
+  text('ENTER THE HUNT', 0, 2, { font: MONO, size: 20, color: '#fff', spacing: 3 });
+  c.restore();
+  text('FREE GAME FOR CHOG HOLDERS', W / 2, 60, { font: MONO, size: 22, color: LILAC, spacing: 6, alpha: a * span(t, 0.3, 0.8) * (1 - span(t, 3.4, 4)) });
+}
+const TRAITS = [
+  ['close1', 'BANDANA', 'SMOKE BOMB', '#e2333d'],
+  ['close2', 'RAINBOW', 'PRISM BEAM', '#4fd1c5'],
+  ['close3', 'LASER EYES', 'LASER', '#c04bff'],
+];
+function beatTraits(t) { // 32.4–38.4: three real Chogs, their traits become moves
+  const a = fade(t, 32.4, 38.4, 0.35); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  text('YOUR CHOG\'S TRAITS ARE ITS MOVES.', W / 2, 90, { size: 70, color: '#fff', shadow: 18, alpha: span(t, 32.5, 33) });
+  TRAITS.forEach(([k, trait, move, col], i) => {
+    const s = back(span(t, 32.8 + i * 0.35, 33.5 + i * 0.35)); if (s <= 0) return;
+    const x = 290 + i * 350, y = 360;
+    c.save(); c.translate(x, y + (1 - s) * 120); c.globalAlpha *= clamp(s);
+    chogCard(0, 0, 250, A[k], '', col);
+    // trait chip → move chip
+    const m = span(t, 34.6 + i * 0.4, 35.1 + i * 0.4);
+    rr(-125, 160, 250, 40, 20); c.fillStyle = 'rgba(0,0,0,.55)'; c.fill();
+    text(trait, 0, 181, { font: MONO, size: 17, color: '#d6d0ea', spacing: 3 });
+    if (m > 0) { c.save(); c.globalAlpha *= m; rr(-125, 210, 250, 48, 24); c.fillStyle = col; c.shadowColor = col; c.shadowBlur = 20; c.fill(); c.restore(); text('→ ' + move, 0, 235, { size: 30, color: '#fff', alpha: m }); }
+    c.restore();
+  });
+  text('Laser eyes? You get a laser.', W / 2, H - 40, { font: BODY, size: 26, color: '#e8e3f6', alpha: span(t, 36.2, 36.7) });
+  c.restore();
+}
+function beatArenas(t) { // 38.4–44.4: painted arenas, one per monster, with fire and claws
+  const a = fade(t, 38.4, 44.4, 0.35); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  const list = [['arGolem', 'golem'], ['arHarpy', 'harpy'], ['arWraith', 'wraith']];
+  const i = Math.min(2, Math.floor(span(t, 38.4, 44.4) * 3)), lt = (t - 38.4) - i * 2;
+  const [bg, mon] = list[i];
+  cover(A[bg], 1.06 + lt * 0.02, -lt * 12, 0);
+  const sh = c.createLinearGradient(0, 0, 0, H); sh.addColorStop(0, 'rgba(7,5,11,.7)'); sh.addColorStop(0.3, 'rgba(7,5,11,0)'); sh.addColorStop(1, 'rgba(7,5,11,.6)'); c.fillStyle = sh; c.fillRect(0, 0, W, H);
+  img(A[mon], 760, 220 + Math.sin(t * 3) * 6, 360, 360);
+  chogCard(320, 430, 200, A.c812, '', '#FF8A1F');
+  // a fireball flies across, then claws rip
+  const f = span(t, 38.6 + i * 2, 39.4 + i * 2);
+  if (f > 0 && f < 1) { const fx = 420 + f * 480, fy = 420 - Math.sin(f * Math.PI) * 120; glow(fx, fy, 70, 'rgba(255,140,40,.9)', 1); glow(fx, fy, 26, 'rgba(255,240,200,1)', 1); }
+  const hit = span(t, 39.4 + i * 2, 39.9 + i * 2);
+  if (hit > 0 && hit < 1 && A.claws) img(A.claws, 820, 260, 240, 240, 1 - hit);
+  if (hit > 0) text(['−84 BURN', 'WEAK SPOT −112', 'CRIT −96'][i], 940, 200 - hit * 30, { size: 46, color: GOLD, shadow: 14, alpha: 1 - span(t, 40 + i * 2, 40.4 + i * 2) });
+  text('EVERY MONSTER HAS ITS OWN ARENA', W / 2, 70, { size: 56, color: '#fff', shadow: 18, alpha: span(t, 38.5, 39) });
+  c.restore();
+}
+const BOARD = [['fudslayer', 3285], ['nadhunter', 2615], ['molandak_fan', 2506], ['purplefren', 1908], ['rugproof', 1758]];
+function beatBoard(t) { // 44.4–50.4: weekly boss leaderboard
+  const a = fade(t, 44.4, 50.4, 0.35); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  glow(W / 2, 200, 500, 'rgba(226,51,61,.25)', 1);
+  text('THIS WEEK', 230, 80, { font: MONO, size: 20, color: LILAC, spacing: 6, align: 'left', alpha: span(t, 44.5, 44.9) });
+  text('BOSS LEADERBOARD', 230, 130, { size: 72, color: '#fff', align: 'left', alpha: span(t, 44.5, 44.9) });
+  // reset countdown with LED
+  rr(880, 85, 170, 80, 18); c.fillStyle = 'rgba(226,51,61,.18)'; c.fill(); led(880, 85, 170, 80, 18, t, 3.5);
+  text('RESETS IN', 965, 110, { font: MONO, size: 14, color: '#ff8a8f', spacing: 3 }); text('3D 12H', 965, 142, { size: 34, color: '#fff' });
+  const medals = [GOLD, '#d6d6e6', '#e3995a'];
+  BOARD.forEach(([n, dmg], i) => {
+    const r = ease(span(t, 45 + i * 0.25, 45.5 + i * 0.25)); if (r <= 0) return;
+    const y = 220 + i * 78;
+    c.save(); c.globalAlpha *= r; c.translate((1 - r) * 80, 0);
+    rr(230, y, 820, 64, 14); c.fillStyle = i < 3 ? 'rgba(255,214,107,.08)' : 'rgba(255,255,255,.04)'; c.fill();
+    text(String(i + 1), 270, y + 33, { size: 34, color: medals[i] || '#a59fbd' });
+    text(n, 320, y + 33, { font: BODY, size: 26, color: '#fff', align: 'left' });
+    const shown = Math.round(dmg * ease(span(t, 45.3 + i * 0.25, 46.5 + i * 0.25)));
+    text(shown.toLocaleString('en-US'), 1010, y + 33, { font: MONO, size: 26, color: '#fff', align: 'right' });
+    c.restore();
+  });
+  text('Top 10 split the weekly $CHOG pool. Every hunt is replayed on the server.', W / 2, H - 40, { font: BODY, size: 24, color: '#d6d0ea', alpha: span(t, 46.8, 47.3) });
+  c.restore();
+}
+const NEVER = ['Ask for a transaction or approval', 'Ask for your seed phrase', 'DM you first', 'Make you sign anything but plain text'];
+function beatSafe(t) { // 50.4–55.4: what we will never do
+  const a = fade(t, 50.4, 55.4, 0.35); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  text('STAY SAFE', W / 2, 110, { font: MONO, size: 22, color: '#ff8a8f', spacing: 8, alpha: span(t, 50.5, 50.9) });
+  text('WHAT WE WILL NEVER DO', W / 2, 175, { size: 84, color: '#fff', shadow: 18, alpha: span(t, 50.5, 50.9) });
+  NEVER.forEach((s, i) => {
+    const r = back(span(t, 51.1 + i * 0.35, 51.6 + i * 0.35)); if (r <= 0) return;
+    const y = 290 + i * 82;
+    c.save(); c.globalAlpha *= clamp(r); c.translate(W / 2 - 330, y); c.scale(clamp(r, 0, 1.2), 1);
+    rr(0, -30, 60, 60, 14); c.fillStyle = '#e2333d'; c.fill();
+    c.strokeStyle = '#fff'; c.lineWidth = 6; c.lineCap = 'round'; c.beginPath(); c.moveTo(18, -12); c.lineTo(42, 12); c.moveTo(42, -12); c.lineTo(18, 12); c.stroke();
+    text(s, 86, 2, { font: BODY, size: 32, color: '#fff', align: 'left' });
+    c.restore();
+  });
+  c.restore();
+}
+function beatLogo(t) { // 55.4–60: logo, the Chog strip, the address
+  const a = span(t, 55.4, 55.9); if (a <= 0) return;
+  c.save(); c.globalAlpha = a;
+  c.fillStyle = '#0b0815'; c.fillRect(0, 0, W, H); glow(W / 2, H / 2, 520, 'rgba(131,110,249,.45)', 1);
+  const s = back(span(t, 55.5, 56.1));
+  c.save(); c.translate(W / 2, 200); c.scale(s, s); if (A.logo) { rr(-64, -64, 128, 128, 30); c.save(); c.clip(); c.drawImage(A.logo, -64, -64, 128, 128); c.restore(); } c.restore();
+  c.font = `110px ${DISPLAY}`; const w1 = c.measureText('CHOG').width, w2 = c.measureText('CONTRACTS').width, gap = 28, x0 = W / 2 - (w1 + gap + w2) / 2;
+  text('CHOG', x0, 350, { size: 110, color: '#fff', align: 'left' });
+  text('CONTRACTS', x0 + w1 + gap, 350, { size: 110, color: null, stroke: LILAC, lw: 3, align: 'left' });
+  text('CHOG-CONTRACTS.NETLIFY.APP', W / 2, 440, { font: MONO, size: 28, color: '#fff', spacing: 4, alpha: span(t, 56.2, 56.6) });
+  text('PLAY FREE · CHOGATHON 2026 · by @Ganraktv', W / 2, 490, { font: MONO, size: 20, color: PINK, spacing: 3, alpha: span(t, 56.4, 56.8) });
+  // the purple-to-pink strip with Chogs sliding by, like the site's footer marquee
+  const sy = 590; const sg = c.createLinearGradient(0, 0, W, 0); sg.addColorStop(0, PURPLE); sg.addColorStop(1, PINK);
+  c.save(); c.globalAlpha *= span(t, 56.6, 57); c.fillStyle = sg; c.fillRect(0, sy, W, 70);
+  const items = ['CHOG.XYZ', 'close1', 'MINT.CHOG.XYZ', 'close2', 'CHOGATHON', 'close3', '@CHOGNFT ON X', 'c812'];
+  let x = -((t - 55.4) * 120) % 1400;
+  for (let rep = 0; rep < 3; rep++) for (const it of items) {
+    if (A[it]) { c.save(); rr(x, sy + 11, 48, 48, 10); c.clip(); c.drawImage(A[it], x, sy + 11, 48, 48); c.restore(); x += 70; }
+    else { c.font = `30px ${DISPLAY}`; const w = c.measureText(it).width; text(it, x, sy + 37, { size: 30, color: '#fff', align: 'left' }); x += w + 26; }
+  }
+  c.restore();
+  c.restore();
+}
+
+/* ---------- making the MP4: every frame is drawn at its exact time and encoded (WebCodecs + mp4-muxer),
+   so it doesn't depend on the tab being in front, and it takes seconds instead of 30 s ---------- */
+const FPS = 30;
+function drawAt(t, dt) {
+  backdrop(t, dt); beatGate(t);
+  const o = t - OFF; beatPost(o); beatMonster(o); beatVs(o); beatFight(o); beatBounty(o); beatRoom(o);
+  beatTraits(t); beatArenas(t); beatBoard(t); beatSafe(t); beatLogo(t);
+}
+let lastVideo = null;
+async function offerFile(blob, name) { // in claude.ai a save goes through the viewer's confirmation; elsewhere a plain download
+  const dl = window.claude?.use ? await window.claude.use('downloads').catch(() => null) : null;
+  if (dl) {
+    try { await dl.save({ filename: name, data: blob }); msg.textContent = 'Saved. Ready to post on X.'; }
+    catch (e) { msg.textContent = e?.code === 'declined' ? 'Not saved. Press Download video when you want it.' : 'Saving is not available here. Right-click the video, Save video as.'; }
+    return;
+  }
+  try { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); } catch {}
+}
+function showVideo(blob, name) {
+  lastVideo = { blob, name };
+  const out = document.getElementById('out'); out.hidden = false;
+  out.querySelector('video').src = URL.createObjectURL(blob);
+  offerFile(blob, name);
+}
+let making = false;
+async function makeMp4() {
+  if (making) return; making = true;
+  const btn = document.getElementById('make'); btn.disabled = true;
+  try {
+    if (!('VideoEncoder' in window)) throw new Error('This browser cannot make the video. Use Chrome or Edge.');
+    msg.textContent = 'Getting ready…';
+    const { Muxer, ArrayBufferTarget } = await import('https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/+esm');
+    let codec = null;
+    for (const cand of ['avc1.640028', 'avc1.4d0028', 'avc1.42e01f']) { const s = await VideoEncoder.isConfigSupported({ codec: cand, width: W, height: H, bitrate: 6e6, framerate: FPS }); if (s.supported) { codec = cand; break; } }
+    if (!codec) throw new Error('No H.264 encoder here. Use Chrome or Edge.');
+    const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: 'avc', width: W, height: H, frameRate: FPS }, fastStart: 'in-memory' });
+    let fail = null;
+    const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: (e) => { fail = e; } });
+    enc.configure({ codec, width: W, height: H, bitrate: 6e6, framerate: FPS });
+    const total = LEN * FPS;
+    for (let i = 0; i < total; i++) {
+      if (fail) throw fail;
+      drawAt(i / FPS, 1 / FPS);
+      const frame = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+      enc.encode(frame, { keyFrame: i % (FPS * 2) === 0 }); frame.close();
+      if (enc.encodeQueueSize > 8) await new Promise((r) => setTimeout(r, 0));
+      if (i % 15 === 0) { msg.textContent = `Making the video… ${Math.round(i / total * 100)}%`; await new Promise((r) => setTimeout(r, 0)); }
+    }
+    await enc.flush(); enc.close(); muxer.finalize();
+    const blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
+    window.__mp4 = blob; // (for checking)
+    showVideo(blob, 'chog-contracts-60s.mp4');
+    if (!/Saved|Not saved|not available/.test(msg.textContent)) msg.textContent = `Done: ${(blob.size / 1e6).toFixed(1)} MB MP4.`;
+  } catch (err) { msg.textContent = err.message || String(err); }
+  making = false; btn.disabled = false; start = performance.now();
+}
+/* ---------- playback ---------- */
+let start = performance.now(), last = start;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  let t = (now - start) / 1000;
+  if (t >= LEN) { start = now; t = 0; }
+  if (!making) drawAt(t, dt);
+  requestAnimationFrame(frame);
+}
+const msg = document.getElementById('msg');
+document.getElementById('play').onclick = () => { start = performance.now(); };
+document.getElementById('make').onclick = makeMp4;
+document.getElementById('dl').onclick = () => { if (lastVideo) offerFile(lastVideo.blob, lastVideo.name); };
+
+(async () => {
+  await Promise.race([Promise.all(['110px "Koulen"', '600 34px "Inter"', '22px "JetBrains Mono"', '40px "Grenze Gotisch"'].map((f) => document.fonts.load(f))), new Promise((r) => setTimeout(r, 3000))]).catch(() => {});
+  const names = { wyrm: 'monsters/wyrm.png', c812: 'chogs/chog-812-ganrak.webp', room: 'room/room.jpg', logo: 'brand/logo.png', kid: 'chogs/apprentice.png',
+    close1: 'chogs/close-1.webp', close2: 'chogs/close-2.webp', close3: 'chogs/close-3.webp',
+    arGolem: 'arena/golem.webp', arHarpy: 'arena/harpy.webp', arWraith: 'arena/wraith.webp', golem: 'monsters/golem.png', harpy: 'monsters/harpy.png', wraith: 'monsters/wraith.png', claws: 'fx/claws.webp' };
+  const keys = Object.keys(names), ims = await Promise.all(keys.map((k) => load('assets/' + names[k])));
+  A = Object.fromEntries(keys.map((k, i) => [k, ims[i]]));
+  start = last = performance.now(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

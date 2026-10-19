@@ -1,0 +1,22 @@
+# Everything at the top level is left out unless listed below: the folder also holds raw art, notes and installers.
+/*
+!/.gitignore
+!/README.md
+!/demo.html
+!/trailer.html
+!/trailer-60.html
+!/serve.ps1
+!/netlify.toml
+!/package.json
+!/package-lock.json
+!/src/
+!/assets/
+!/data/
+!/netlify/
+!/scripts/
+!/vendor/
+
+# Generated or local only
+node_modules/
+.netlify/
+site/
