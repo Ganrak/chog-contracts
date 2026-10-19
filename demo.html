@@ -69,6 +69,7 @@ button{font:inherit; color:inherit}
 /* once you scroll, only the tab bar and the account box follow: no band, no logo */
 header.top{position:sticky; top:0; z-index:40; padding-bottom:12px; pointer-events:none}
 header.top > *{pointer-events:auto}
+@media (max-width:900px){ header.top{position:relative} } /* on phones the header wraps to three rows: riding along it would cover a quarter of the screen */
 header.top .mark{transition:opacity .25s, visibility .25s}
 html.scrolled header.top .mark{opacity:0; visibility:hidden}
 html.scrolled header.top .tabs, html.scrolled header.top #me{background:rgba(22,16,38,.88); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); box-shadow:0 8px 24px rgba(0,0,0,.45)}
