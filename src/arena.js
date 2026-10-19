@@ -45,7 +45,9 @@ const MOVE_ICON = { Bribe: 'stun', Grit: 'shield', Ward: 'shield', Fortify: 'arm
   'Royal Decree': 'buff', 'Cap Tip': 'buff', Rally: 'buff', 'Chog Pride': 'buff', Blink: 'dodge', Jeet: 'dodge', Phalanx: 'shield', 'Cold Front': 'slow',
   'Second Wind': 'heal', Blessing: 'heal', Honk: 'confused', Distraction: 'stun', Pickpocket: 'drain', Pump: 'buff', Overclock: 'energy', Gore: 'plain',
   Headbutt: 'stun', Spores: 'poison', Foresight: 'exposed', Scanner: 'exposed', Rewind: 'heal', 'Deal With It': 'ult', 'Flood of Tears': 'heal',
-  Heartbreaker: 'charm', 'Death Stare': 'shadow', Mog: 'mog', 'Good Vibes': 'heal', Ribbit: 'frog', 'Clown Fiesta': 'confused' };
+  Heartbreaker: 'charm', 'Death Stare': 'shadow', Mog: 'mog', 'Good Vibes': 'heal', Ribbit: 'frog', 'Clown Fiesta': 'confused',
+  'Bucket Toss': 'slow', 'Peace Out': 'heal', 'Rain Cloud': 'slow', 'Star Power': 'buff', Curveball: 'plain', Hyperfocus: 'buff', 'Hair Flip': 'dodge',
+  'Free Trade': 'energy', 'Stay Inside': 'shield', 'Puppy Eyes': 'stun', 'Focus Shot': 'ult', 'Power Nap': 'heal', Deadpan: 'armor', 'Panic Mode': 'rage', Wildcard: 'ult' };
 const STATUS_ICON = { burn: 'fire', poison: 'poison', slow: 'slow', stun: 'stun', exposed: 'exposed', mog: 'mog', confused: 'confused', armor: 'armor',
   guard: 'shield', evade: 'dodge', buff: 'buff', weak: 'weak', frog: 'frog', rage: 'rage', enraged: 'enraged' };
 const INTENT_ICON = { hit: 'hit', heavy: 'heavy', poison: 'poison', drain: 'drain', armor: 'armor', weaken: 'weak' };

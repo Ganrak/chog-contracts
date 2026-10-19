@@ -48,6 +48,15 @@ const E_MOVES = {
   Headbutt: { text: 'A hit with a 40% chance to stun.', run: (f, ev, rnd) => { strike(f, ev, rnd, 2, f.element); if (rnd() < 0.4) stun(f, ev, 1); } },
   Spores: { text: 'Poison the monster (3 stacks).', run: (f, ev) => { f.foe.poison += 3; ev.push({ t: 'status', to: 'foe', s: 'poison', text: 'Poisoned ×3' }); } },
   Foresight: { text: 'Read the monster: its next hit is halved, +1 energy.', run: (f, ev) => { f.me.guard = Math.max(f.me.guard, 0.5); gainEnergy(f, ev, 1); ev.push({ t: 'status', to: 'me', s: 'guard', text: 'Foresight' }); } },
+  'Bucket Toss': { text: 'A hit that slows the monster for a turn.', run: (f, ev, rnd) => { strike(f, ev, rnd, 2, f.element); slow(f, ev, 1); } },
+  'Peace Out': { text: 'Heal 15%; the monster hits 40% weaker for 2 turns.', run: (f, ev) => { heal(f, ev, 0.15); f.foe.mog = Math.max(f.foe.mog, 2); ev.push({ t: 'status', to: 'foe', s: 'mog', text: 'Calmed' }); } },
+  'Rain Cloud': { text: 'An Aqua hit that slows it for 2 turns.', run: (f, ev, rnd) => { strike(f, ev, rnd, 1.8, 'aqua'); slow(f, ev, 2); } },
+  'Star Power': { text: '+50% damage next turn and +1 energy.', run: (f, ev) => { buff(f, ev, 0.5, 1); gainEnergy(f, ev, 1); } },
+  Curveball: { text: 'A hit with a 40% chance to crit.', run: (f, ev, rnd) => strike(f, ev, rnd, 2.4, f.element, { crit: 0.4 }) },
+  Hyperfocus: { text: '+60% damage for one turn.', run: (f, ev) => buff(f, ev, 0.6, 1) },
+  'Hair Flip': { text: 'Dodge the next hit and slap back.', run: (f, ev, rnd) => { f.me.evade = 1; ev.push({ t: 'status', to: 'me', s: 'evade', text: 'Hair flip' }); strike(f, ev, rnd, 1, f.element); } },
+  'Free Trade': { text: '+1 energy and +20% damage for 2 turns.', run: (f, ev) => { gainEnergy(f, ev, 1); buff(f, ev, 0.2, 2); } },
+  'Stay Inside': { text: 'A shield worth 20% of your health, and heal 8%.', run: (f, ev) => { f.me.shield += Math.round(f.me.maxHp * 0.2); ev.push({ t: 'shield', to: 'me', n: f.me.shield }); heal(f, ev, 0.08); } },
 };
 const R_MOVES = {
   Laser: { text: 'A beam in your eyes\' element for 6× damage.', run: (f, ev, rnd) => strike(f, ev, rnd, 6, f.laserEl, { beam: true }) },
@@ -62,8 +71,20 @@ const R_MOVES = {
   Ribbit: { text: 'A frog joins and hits every turn for 3 turns.', run: (f, ev, rnd) => { f.me.frog = 3; ev.push({ t: 'status', to: 'me', s: 'frog', text: 'Frog joined' }); strike(f, ev, rnd, 2, 'wild'); } },
   'Clown Fiesta': { text: 'Confuse it for 2 turns (it may hit itself), then hit.', run: (f, ev, rnd) => { f.foe.confused = 2; ev.push({ t: 'status', to: 'foe', s: 'confused', text: 'Confused' }); strike(f, ev, rnd, 2.5, f.element); } },
   Signature: { text: 'A one-of-one ultimate: 7× damage.', run: (f, ev, rnd) => strike(f, ev, rnd, 7, f.element, { beam: true }) },
+  'Puppy Eyes': { text: 'Stun it for a turn, heal 15%, then hit.', run: (f, ev, rnd) => { stun(f, ev, 1); heal(f, ev, 0.15); strike(f, ev, rnd, 2, f.element); } },
+  'Focus Shot': { text: 'One clean shot for 4.5× damage, 30% crit.', run: (f, ev, rnd) => strike(f, ev, rnd, 4.5, f.element, { crit: 0.3, beam: true }) },
+  'Power Nap': { text: 'Heal 30%, shake off weakness, +1 energy.', run: (f, ev) => { heal(f, ev, 0.3); f.me.weak = 0; gainEnergy(f, ev, 1); } },
+  Deadpan: { text: 'Three hits that ignore armor.', run: (f, ev, rnd) => { for (let i = 0; i < 3; i++) strike(f, ev, rnd, 1.6, f.element, { pierce: true }); } },
+  'Panic Mode': { text: 'A 4× hit, 40% stronger when you are below half health.', run: (f, ev, rnd) => strike(f, ev, rnd, f.me.hp / f.me.maxHp < 0.5 ? 5.6 : 4, f.element) },
+  // really random now (it used to fall back to a laser): one of the attacking ultimates, picked with the fight's own dice
+  Wildcard: { text: 'A random ultimate: you never know which.', run: (f, ev, rnd) => {
+    const k = WILD[Math.floor(rnd() * WILD.length)];
+    ev.push({ t: 'status', to: 'me', s: 'buff', text: `Wildcard: ${k}` });
+    R_MOVES[k].run(f, ev, rnd);
+  } },
 };
-export const HEAL_ULT = /^(Rewind|Flood of Tears)$/;
+const WILD = ['Laser', 'Scanner', 'Deal With It', 'Heartbreaker', 'Mog', 'Clown Fiesta', 'Ribbit', 'Focus Shot', 'Deadpan'];
+export const HEAL_ULT = /^(Rewind|Flood of Tears|Power Nap)$/;
 const R_KEY = (name) => (/laser$/i.test(name) ? 'Laser' : /signature/i.test(name) ? 'Signature' : name);
 
 /* ---------- helpers that change the fight and record events ---------- */
@@ -71,6 +92,7 @@ function gainEnergy(f, ev, n) { const before = f.me.energy; f.me.energy = Math.m
 function heal(f, ev, share, quiet) { const n = Math.min(f.me.maxHp - f.me.hp, Math.round(f.me.maxHp * share)); if (!n && quiet) return; f.me.hp += n; ev.push({ t: 'heal', to: 'me', n }); }
 // a weaker buff never replaces a stronger one that is still running (a Power potion then Cap Tip keeps +50%)
 function buff(f, ev, amount, turns) { if (!(f.me.dmg > amount && f.me.dmgTurns > 0)) f.me.dmg = amount; f.me.dmgTurns = Math.max(f.me.dmgTurns, turns); ev.push({ t: 'status', to: 'me', s: 'buff', text: `+${Math.round(f.me.dmg * 100)}% damage` }); }
+function slow(f, ev, turns) { f.foe.slow = Math.max(f.foe.slow, turns); ev.push({ t: 'status', to: 'foe', s: 'slow', text: 'Slowed' }); }
 function stun(f, ev, turns) { f.foe.stun = Math.max(f.foe.stun, turns); ev.push({ t: 'status', to: 'foe', s: 'stun', text: turns > 1 ? `Stunned ${turns} turns` : 'Stunned' }); }
 // the right element should decide a normal fight; against the boss it helps but levels and potions still matter
 const elMult = (f, el) => (el === f.foe.weak ? (f.foe.boss ? TUNE.bossWeak : 1.7) : el === f.foe.immune ? 0.6 : 1);
@@ -148,8 +170,12 @@ const SHORT = {
   Pickpocket: ' + loot', Pump: ', then tired', Overclock: '+2 energy', Gore: ', pierce', Headbutt: ' + stun?', Spores: 'Poison ×3', Foresight: 'Halve next hit',
   Laser: '', Scanner: ' + expose', Rewind: 'Heal 40%, cure', 'Deal With It': ' ×5', 'Flood of Tears': 'Heal 38% + slow', Heartbreaker: ' + stun 2',
   'Death Stare': 'Finish under 35%', Mog: ' + weaken it', 'Good Vibes': 'Heal 20%, reset, hit', Ribbit: ' + frog ally', 'Clown Fiesta': ' + confuse', Signature: '',
+  'Bucket Toss': ' + slow', 'Peace Out': 'Heal 15%, calm it', 'Rain Cloud': ' + slow 2', 'Star Power': '+50% dmg, +1 energy', Curveball: ', crit 40%',
+  Hyperfocus: '+60% dmg', 'Hair Flip': ' + dodge', 'Free Trade': '+1 energy, +20% dmg', 'Stay Inside': 'Shield 20%, heal 8%',
+  'Puppy Eyes': ' + stun, heal 15%', 'Focus Shot': ', crit 30%', 'Power Nap': 'Heal 30%, +1 energy', Deadpan: ' ×3, pierce', 'Panic Mode': ', more if hurt', Wildcard: 'Random ultimate',
 };
-const SHORT_HIT = { Pickpocket: 1.2, Pump: 4.4, Gore: 3.2, Headbutt: 2, Laser: 6, Scanner: 2.5, 'Deal With It': 1.3, Heartbreaker: 2.5, Mog: 2.5, Ribbit: 2, 'Clown Fiesta': 2.5, Signature: 7 };
+const SHORT_HIT = { Pickpocket: 1.2, Pump: 4.4, Gore: 3.2, Headbutt: 2, Laser: 6, Scanner: 2.5, 'Deal With It': 1.3, Heartbreaker: 2.5, Mog: 2.5, Ribbit: 2, 'Clown Fiesta': 2.5, Signature: 7,
+  'Bucket Toss': 2, 'Rain Cloud': 1.8, Curveball: 2.4, 'Hair Flip': 1, 'Puppy Eyes': 2, 'Focus Shot': 4.5, Deadpan: 1.6, 'Panic Mode': 4 };
 export const intentText = (f) => {
   const i = f.foe.intent, n = i.mult ? Math.round(i.mult * f.foe.power * f.foe.hitMult * (f.foe.mog ? 0.6 : 1) * (f.foe.slow ? 0.65 : 1) * (f.foe.boss ? rage(f) : 1)) : 0;
   return { name: i.name, kind: i.kind, n, text: n ? `${i.name} · ${n}${i.kind === 'poison' ? ' + poison' : ''}` : `${i.name} · ${KIND_TEXT[i.kind]}`, stunned: f.foe.stun > 0 };

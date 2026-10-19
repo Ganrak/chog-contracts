@@ -264,9 +264,10 @@ function beatGate(t) { // 0–5: the gate, a WANTED poster for the boss, the glo
   text('FREE GAME FOR CHOG HOLDERS', W / 2, 60, { font: MONO, size: 22, color: LILAC, spacing: 6, alpha: a * span(t, 0.3, 0.8) * (1 - span(t, 3.4, 4)) });
 }
 const TRAITS = [
-  ['close1', 'BANDANA', 'SMOKE BOMB', '#e2333d'],
-  ['close2', 'RAINBOW', 'PRISM BEAM', '#4fd1c5'],
-  ['close3', 'LASER EYES', 'LASER', '#c04bff'],
+  // real names from src/kit.js: Head bandana → Second Wind, Mouth rainbow → Rainbow Puke, Eyes purple laser → Shadow Laser
+  ['close1', 'BANDANA', 'SECOND WIND', '#e2333d'],
+  ['close2', 'RAINBOW MOUTH', 'RAINBOW PUKE', '#4fd1c5'],
+  ['close3', 'PURPLE LASER', 'SHADOW LASER', '#c04bff'],
 ];
 function beatTraits(t) { // 32.4–38.4: three real Chogs, their traits become moves
   const a = fade(t, 32.4, 38.4, 0.35); if (a <= 0) return;

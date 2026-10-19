@@ -69,6 +69,16 @@ const HEAD_E = [
   [/mon cap|mon beanie|choggie|chog cap|mega chog/, 'Chog Pride', 'Team heals 10% and deals 10% more for 4 s.'],
   [/boob/, 'Distraction', 'The monster loses its next turn.'],
   [/wagmi|mcga|mmga|mega/, 'Rally', 'Team moves and attacks 15% faster for 5 s.'],
+  // the most common caps each get their own move, so a cap is not just a cap
+  [/bucket/, 'Bucket Toss', 'Throws its bucket hat: a hit that slows the monster.'],
+  [/peace/, 'Peace Out', 'Heals a little and calms the monster down.'],
+  [/cloud/, 'Rain Cloud', 'A cold rain: an Aqua hit that slows.'],
+  [/star cap/, 'Star Power', 'A big damage boost and +1 energy.'],
+  [/balls cap/, 'Curveball', 'A tricky throw that often crits.'],
+  [/tism|retard cap/, 'Hyperfocus', 'Locks in: +60% damage for one turn.'],
+  [/bob hair/, 'Hair Flip', 'Flips its hair: dodges the next hit and slaps back.'],
+  [/rh beanie/, 'Free Trade', '+1 energy and a damage boost.'],
+  [/neet/, 'Stay Inside', 'Hides indoors: a shield and a little rest.'],
   [/bucket|beanie|cap|hat|hair|neet|nose|banana|8 ball|laser/, 'Cap Tip', 'Small team buff: +10% damage for 4 s.'],
 ];
 const EYES_R = [
@@ -83,6 +93,12 @@ const EYES_R = [
   [/happy|xd|smile/, 'Good Vibes', 'Resets the team\'s Q and E.'],
   [/frog/, 'Ribbit', 'Summons a frog that fights for 8 s.'],
   [/clown/, 'Clown Fiesta', 'For 5 s the monster attacks a random target, sometimes itself.'],
+  // plain eyes get their own ultimates too
+  [/round/, 'Puppy Eyes', 'So sad the monster stops for a turn. Heals a little, then hits.'],
+  [/normal/, 'Focus Shot', 'One clean shot: big damage, often crits.'],
+  [/tired/, 'Power Nap', 'Sleeps it off: heals 30% and wakes up with energy.'],
+  [/flat/, 'Deadpan', 'Three flat hits that ignore armor.'],
+  [/worried/, 'Panic Mode', 'Swings wildly: a big hit, bigger when hurt.'],
   [/.*/, 'Wildcard', 'A random ultimate from the list above.'],
 ];
 const MOUTH_P = [
