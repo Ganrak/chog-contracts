@@ -22,6 +22,7 @@ import { startGateLines } from './gatelines.js';import { play as sfx, sfxOn, set
 import { drawShareCard, shareHunt, saveCard, shareImage } from './share.js';
 import { musicOn, setMusic } from './music.js';
 import { startMotion as startTouches } from './motion.js';
+import { POOL, poolPrize } from './pool.js';
 import { listWallets, connect, ownershipMessage, signOwnership, listingMessage, signText, disconnect, load as loadWallet, short } from './wallet.js';
 
 const $ = (s) => document.querySelector(s);
@@ -582,7 +583,19 @@ function addBossDamage(dmg, win) {
   try { localStorage.setItem(LB_KEY, JSON.stringify(w)); } catch {}
 }
 const LB_NAMES = ['nadhunter', 'chogmaxi', 'purplefren', 'wenmainnet', 'fudslayer', 'molandak_fan', 'gmonad', 'rugproof', 'bigchog', 'laser_eyes', 'monadmaxxer', 'chogsmith'];
-const LB_SPLIT = [0.25, 0.18, 0.13, 0.1, 0.08, 0.07, 0.06, 0.05, 0.04, 0.04]; // share of the weekly pool for places 1 to 10
+const LB_SPLIT = POOL.split; // share of the weekly pool for places 1 to 10 (src/pool.js)
+const poolWeek = () => weekId() === POOL.week; // the launch pool pays this week's board in real $CHOG
+const shareCell = (i, real = false) => (i >= 10 ? '–' : real && poolWeek() ? `${fmtChog(poolPrize(i))}` : `${Math.round(LB_SPLIT[i] * 100)}%`);
+let poolReport = null; // once the week is paid: the payments with their transaction hashes (/api/pool)
+fetch('/api/pool', { cache: 'no-store' }).then((r) => (r.ok && /json/.test(r.headers.get('content-type') || '') ? r.json() : null)).then((d) => { if (d?.report) { poolReport = d.report; renderLeaderboard(); } }).catch(() => {});
+function poolCard() {
+  if (!poolWeek() && !poolReport) return '';
+  const paid = poolReport?.paidAt ? Object.values(poolReport.payments || {}).filter((p) => p.status === 'paid') : [];
+  return `<div class="pool-card"><div class="pool-amt"><small>Launch pool · real $CHOG</small><b>${fmtChog(POOL.amount)}</b><span>$CHOG</span></div>
+    <div class="pool-txt"><p><b>We opened a ${fmtChog(POOL.amount)} $CHOG pool so you can try it for real.</b> The top 10 on this week's boss board are paid automatically to their wallet when the week ends (Monday 00:00 UTC). No claiming, no signing. No Chog yet? <a href="https://opensea.io/collection/chog-genesis" target="_blank" rel="noopener">Get one on OpenSea</a>.</p>
+    <p class="pool-rules">Your best 3 boss hunts count · at least ${POOL.minHunts} hunts · one Chog ranks one wallet · the Chog must have been in your wallet when the pool opened.</p>
+    ${paid.length ? `<p class="pool-paid">Paid: ${paid.map((p) => `<a href="https://monadscan.com/tx/${esc(p.tx)}" target="_blank" rel="noopener">${fmtChog(p.amount)}</a>`).join(' · ')}</p>` : ''}</div></div>`;
+}
 /* the live board: when the site runs with its server (Netlify functions under /api), scores are real. A ranked hunt
    needs a connected wallet that owns the Chog; the server hands out a seed, the fight is played with it, and the keys
    pressed are sent back and replayed on the server (src/replay.js). Elsewhere (the preview, the artifact) the board
@@ -655,7 +668,7 @@ function renderLeaderboard() {
   const w = loadWeekly(), me = { name: `You · ${myName() || current.name}`, dmg: w.dmg, hunts: w.hunts, wins: w.wins, me: true };
   const all = [...rivals, me].sort((a, b) => b.dmg - a.dmg), myRank = all.indexOf(me) + 1;
   const end = new Date(weekStart().getTime() + 7 * 864e5), left = end - Date.now(), d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5);
-  const row = (r, i) => `<li class="${r.me ? 'me' : ''}${i < 3 ? ` top top${i + 1}` : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(r.name)}${r.me ? '' : ' <small>demo</small>'}</span><span class="lb-dmg">${r.dmg.toLocaleString('en-US')}</span><span class="lb-hunts">${r.wins}/${r.hunts}</span><span class="lb-share">${i < 10 ? `${Math.round(LB_SPLIT[i] * 100)}%` : '–'}</span></li>`;
+  const row = (r, i) => `<li class="${r.me ? 'me' : ''}${i < 3 ? ` top top${i + 1}` : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(r.name)}${r.me ? '' : ' <small>demo</small>'}</span><span class="lb-dmg">${r.dmg.toLocaleString('en-US')}</span><span class="lb-hunts">${r.wins}/${r.hunts}</span><span class="lb-share">${shareCell(i)}</span></li>`;
   const top = all.slice(0, 10).map(row).join('');
   el.innerHTML = `<div class="lb-head"><div><p class="eyebrow">This week</p><h3>Boss leaderboard</h3><p>Your best 3 hunts against <b>${esc(BOSS.name)}</b>, added up. Top 10 split the weekly $CHOG pool.</p></div>
     <div class="lb-clock"><small>Resets in</small><b>${d}d ${h}h</b></div></div>
@@ -666,10 +679,10 @@ function renderLiveBoard(el) {
   const me = (wAddr || '').toLowerCase(), list = live.entries || [];
   const end = new Date(weekStart().getTime() + 7 * 864e5), left = end - Date.now(), d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5);
   const myRank = list.findIndex((e) => e.wallet === me) + 1;
-  const row = (r, i) => `<li class="${r.wallet === me ? 'me' : ''}${i < 3 ? ` top top${i + 1}` : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(r.handle || short(r.wallet))} <small>${esc(r.name || 'Chog')}</small></span><span class="lb-dmg">${Number(r.dmg).toLocaleString('en-US')}</span><span class="lb-hunts">${r.wins}/${r.hunts}</span><span class="lb-share">${i < 10 ? `${Math.round(LB_SPLIT[i] * 100)}%` : '–'}</span></li>`;
+  const row = (r, i) => `<li class="${r.wallet === me ? 'me' : ''}${i < 3 ? ` top top${i + 1}` : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(r.handle || short(r.wallet))} <small>${esc(r.name || 'Chog')}</small></span><span class="lb-dmg">${Number(r.dmg).toLocaleString('en-US')}</span><span class="lb-hunts">${r.wins}/${r.hunts}</span><span class="lb-share">${shareCell(i, true)}</span></li>`;
   const rows = list.slice(0, 10).map(row).join('') + (myRank > 10 ? `<li class="lb-gap">…</li>${row(list[myRank - 1], myRank - 1)}` : '');
   const canRank = wAddr && HUNTERS.some((x) => x.brought && isOwned(x));
-  el.innerHTML = `<div class="lb-head"><div><p class="eyebrow">This week · live</p><h3>Boss leaderboard</h3><p>Your best 3 hunts against the raid boss <b>${esc(BOSS.name)}</b>, added up. Every hunt is replayed on the server before it counts. Top 10 split the weekly $CHOG pool.</p></div>
+  el.innerHTML = `${poolCard()}<div class="lb-head"><div><p class="eyebrow">This week · live</p><h3>Boss leaderboard</h3><p>Your best 3 hunts against the raid boss <b>${esc(BOSS.name)}</b>, added up. Every hunt is replayed on the server before it counts. Top 10 split the weekly $CHOG pool.</p></div>
     <div class="lb-clock"><small>Resets in</small><b>${d}d ${h}h</b></div></div>
     <ol class="lb-list"><li class="lb-cols"><span>#</span><span>Hunter</span><span>Damage</span><span>Wins</span><span>Pool</span></li>${rows || '<li class="lb-gap">No hunts yet this week. Be the first.</li>'}</ol>
     <p class="lb-note">${myRank ? `You're <b>#${myRank}</b>.` : canRank ? 'Hunt the weekly boss with your Chog to get on the board.' : 'Connect the wallet that holds your Chog to get on the board.'}</p>`;

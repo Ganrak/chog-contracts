@@ -66,7 +66,7 @@ export function loadSnapshot() {
 const fromSnapshot = (c) => ({ tokenId: c.id, name: c.name || `Chog #${c.id}`, owner: c.owner, image: ipfs(c.image), traits: c.traits || {} });
 
 /** Reads ownerOf for a few ids in one request. */
-async function ownersOf(ids) {
+export async function ownersOf(ids) {
   const replies = await rpc(ids.map((id) => SEL.ownerOf + word(id)));
   return replies.map((r) => (r.result ? decodeAddress(r.result) : null));
 }
