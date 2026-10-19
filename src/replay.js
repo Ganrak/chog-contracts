@@ -8,6 +8,9 @@ export const MAX_LEVEL = 20, MAX_KEYS = 120;
 // On the weekly board every Chog fights the boss at this level, set by the server in the signed ticket. A level sent by
 // the browser can't be checked (progress lives in the browser), so it is never trusted: only traits and play decide.
 export const RANKED_LEVEL = 10;
+// ...and the ranked boss is a raid boss with 3× health: it almost never falls, so the board measures how much damage
+// you deal, not how many times you showed up. A week's score is your best 3 hunts added up.
+export const RANKED_HP = 3, BEST_OF = 3;
 
 // a hunter name for the board: 3-16 letters, digits, _ or spaces; names that pose as the project are refused
 const RESERVED = /chog ?nft|chogcontract|monad|admin|official|support|moderator|team|ganraktv/i;
@@ -20,8 +23,8 @@ export function cleanName(n) {
 export const lbMessage = (wallet, week) => `Chog Contracts · weekly boss leaderboard\nWallet: ${wallet.toLowerCase()}\nWeek of: ${week}\n\nThis only proves the wallet is yours so your boss damage can be ranked. It costs nothing and allows nothing else.`;
 
 // at: when the hunt started (the boss's weak spot turns every Monday, so the replay uses that week's boss)
-export function replayBoss({ traits, name, level, keys, seed, at = Date.now() }) {
-  const boss = { ...MONSTERS.find((m) => m.boss), ...bossWeek(new Date(at)) };
+export function replayBoss({ traits, name, level, keys, seed, at = Date.now(), hpMult = 1 }) {
+  const boss = { ...MONSTERS.find((m) => m.boss), ...bossWeek(new Date(at)), hpMult };
   const lv = Math.max(1, Math.min(MAX_LEVEL, Math.floor(Number(level) || 1)));
   const stats = hunterStats({ traits, name, ghost: false }, { level: lv });
   const rand = seededRand(seed);

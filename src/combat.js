@@ -16,7 +16,7 @@ export const MOVESETS = {
 };
 // tuning: monster health and hit strength relative to its power
 // tuned by simulation: first monster easy, element choice matters, boss needs levels
-export const TUNE = { hp: 2.6, dmg: 1.3, boss: 1.25, bossWeak: 1.35, rageTurn: 10, rageStep: 0.2 };
+export const TUNE = { hp: 2.85, dmg: 1.4, boss: 1.25, bossWeak: 1.35, rageTurn: 10, rageStep: 0.2 };
 const KIND_TEXT = { hit: 'attack', heavy: 'heavy attack', poison: 'poison', drain: 'steals energy', armor: 'raises armor', weaken: 'weakens you' };
 
 /* ---------- what each move does, by the names kit.js gives them ---------- */
@@ -139,7 +139,7 @@ export function createFight(stats, m, { level = 1, ghost = false, rand = Math.ra
       weak: 0, poison: 0, frog: item === 'Pet Frog' ? 99 : 0, revive: k.perks.some((p) => p.name === 'Undead') || item === 'Spare Heart',
       cd: { W: 0, E: 0 } },
     foe: { name: m.name, kind: m.kind, power: m.power, weak: m.weak, immune: m.immune, boss: !!m.boss,
-      maxHp: Math.round(m.power * TUNE.hp * (m.boss ? TUNE.boss : 1)), hp: 0, set, step: Math.floor(rand() * set.length),
+      maxHp: Math.round(m.power * TUNE.hp * (m.boss ? TUNE.boss : 1) * (m.hpMult || 1)), hp: 0, set, step: Math.floor(rand() * set.length),
       stun: 0, slow: 0, mog: 0, exposed: 0, confused: 0, armor: 0, poison: 0, burn: 0,
       hitMult: TUNE.dmg * (item === 'Red Candle' ? 0.9 : 1), missChance: (passive === 'Drool' ? 0.1 : 0) + (item === 'Smoke Screen' ? 0.15 : 0) },
   };

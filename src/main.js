@@ -657,7 +657,7 @@ function renderLeaderboard() {
   const end = new Date(weekStart().getTime() + 7 * 864e5), left = end - Date.now(), d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5);
   const row = (r, i) => `<li class="${r.me ? 'me' : ''}${i < 3 ? ` top top${i + 1}` : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(r.name)}${r.me ? '' : ' <small>demo</small>'}</span><span class="lb-dmg">${r.dmg.toLocaleString('en-US')}</span><span class="lb-hunts">${r.wins}/${r.hunts}</span><span class="lb-share">${i < 10 ? `${Math.round(LB_SPLIT[i] * 100)}%` : '–'}</span></li>`;
   const top = all.slice(0, 10).map(row).join('');
-  el.innerHTML = `<div class="lb-head"><div><p class="eyebrow">This week</p><h3>Boss leaderboard</h3><p>Total damage dealt to <b>${esc(BOSS.name)}</b>. Top 10 split the weekly $CHOG pool.</p></div>
+  el.innerHTML = `<div class="lb-head"><div><p class="eyebrow">This week</p><h3>Boss leaderboard</h3><p>Your best 3 hunts against <b>${esc(BOSS.name)}</b>, added up. Top 10 split the weekly $CHOG pool.</p></div>
     <div class="lb-clock"><small>Resets in</small><b>${d}d ${h}h</b></div></div>
     <ol class="lb-list"><li class="lb-cols"><span>#</span><span>Hunter</span><span>Damage</span><span>Wins</span><span>Pool</span></li>${top}${myRank > 10 ? `<li class="lb-gap">…</li>${row(me, myRank - 1)}` : ''}</ol>
     <p class="lb-note">${w.hunts ? `You're <b>#${myRank}</b> with ${w.dmg.toLocaleString('en-US')} damage.` : 'Hunt the weekly boss to get on the board.'} Other names are sample players in this demo.</p>`;
@@ -669,7 +669,7 @@ function renderLiveBoard(el) {
   const row = (r, i) => `<li class="${r.wallet === me ? 'me' : ''}${i < 3 ? ` top top${i + 1}` : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(r.handle || short(r.wallet))} <small>${esc(r.name || 'Chog')}</small></span><span class="lb-dmg">${Number(r.dmg).toLocaleString('en-US')}</span><span class="lb-hunts">${r.wins}/${r.hunts}</span><span class="lb-share">${i < 10 ? `${Math.round(LB_SPLIT[i] * 100)}%` : '–'}</span></li>`;
   const rows = list.slice(0, 10).map(row).join('') + (myRank > 10 ? `<li class="lb-gap">…</li>${row(list[myRank - 1], myRank - 1)}` : '');
   const canRank = wAddr && HUNTERS.some((x) => x.brought && isOwned(x));
-  el.innerHTML = `<div class="lb-head"><div><p class="eyebrow">This week · live</p><h3>Boss leaderboard</h3><p>Total damage dealt to <b>${esc(BOSS.name)}</b>. Every hunt is replayed on the server before it counts. Top 10 split the weekly $CHOG pool.</p></div>
+  el.innerHTML = `<div class="lb-head"><div><p class="eyebrow">This week · live</p><h3>Boss leaderboard</h3><p>Your best 3 hunts against the raid boss <b>${esc(BOSS.name)}</b>, added up. Every hunt is replayed on the server before it counts. Top 10 split the weekly $CHOG pool.</p></div>
     <div class="lb-clock"><small>Resets in</small><b>${d}d ${h}h</b></div></div>
     <ol class="lb-list"><li class="lb-cols"><span>#</span><span>Hunter</span><span>Damage</span><span>Wins</span><span>Pool</span></li>${rows || '<li class="lb-gap">No hunts yet this week. Be the first.</li>'}</ol>
     <p class="lb-note">${myRank ? `You're <b>#${myRank}</b>.` : canRank ? 'Hunt the weekly boss with your Chog to get on the board.' : 'Connect the wallet that holds your Chog to get on the board.'}</p>`;
@@ -1002,7 +1002,8 @@ async function hunt(m) {
   const ranked = m.boss ? await rankedTicket(current).catch(() => null) : null; // the weekly boss counts on the shared board
   // a ranked hunt is fought at the server's fixed level (as its replay is), so everyone meets the boss on equal terms
   const lvl = ranked?.level || p.level, st = ranked?.level ? hunterStats(current, { level: lvl }) : hunterStats(current, p);
-  if (ranked?.level) toast(`Ranked hunt: every Chog fights the boss at <b>level ${lvl}</b>, so only traits and play decide the board.`);
+  if (ranked?.level) toast(`Ranked hunt: every Chog fights a <b>raid boss</b> at <b>level ${lvl}</b>. Your best 3 hunts of the week make your score.`);
+  if (ranked?.hpMult > 1) m = { ...m, hpMult: ranked.hpMult }; // the same raid-boss health the server replays with
   openHunt({
     hunter: current, level: lvl, stats: st, monster: m, rand: ranked ? seededRand(ranked.seed) : Math.random,
     art: current.ghost ? APPR_ARENA : art(current), beast: monsterArt(m.kind, true), monColor: MON_COLOR[m.kind] || MON_COLOR.wraith,
