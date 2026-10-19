@@ -10,7 +10,7 @@ A free browser game for [Chog Genesis](https://www.chog.xyz) holders on Monad, b
 
 Someone on X says "Monad is a ghost chain". In Chog Contracts that post becomes a monster contract: its words decide the monster's kind, level and weak spot. You send your Chog to hunt it, fight it turn by turn, and take the $CHOG bounty.
 
-- **Your NFT is the character.** The Chog's real on-chain traits become its moves: laser eyes give you a laser, a bandana gives you a smoke bomb. No two Chogs fight the same way.
+- **Your NFT is the character.** The Chog's real on-chain traits become its moves: laser eyes give you a laser. No two Chogs fight the same way.
 - **It remembers.** Every hunt is written into the Chog's journal: wins, scars and injuries that need rest, trophies, levels. If the NFT is sold, the new owner starts at level 1, but the story stays with the token.
 - **A weekly boss and a real leaderboard.** Everyone hunts the same boss. Each hunt is replayed on the server from a signed seed and the keys pressed, so only real damage counts. The top 10 split the weekly $CHOG pool.
 - **Rent your Chog out.** No time to play? List your Chog for hire with one plain-text signature. Other players hunt with it and you get 30% of every bounty.
