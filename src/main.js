@@ -584,7 +584,7 @@ function addBossDamage(dmg, win) {
 }
 const LB_NAMES = ['nadhunter', 'chogmaxi', 'purplefren', 'wenmainnet', 'fudslayer', 'molandak_fan', 'gmonad', 'rugproof', 'bigchog', 'laser_eyes', 'monadmaxxer', 'chogsmith'];
 const LB_SPLIT = POOL.split; // share of the weekly pool for places 1 to 10 (src/pool.js)
-const poolWeek = () => weekId() === POOL.week; // the launch pool pays this week's board in real $CHOG
+const poolWeek = () => POOL.active && weekId() === POOL.week; // the launch pool pays this week's board in real $CHOG
 const shareCell = (i, real = false) => (i >= 10 ? '–' : real && poolWeek() ? `${fmtChog(poolPrize(i))}` : `${Math.round(LB_SPLIT[i] * 100)}%`);
 let poolReport = null; // once the week is paid: the payments with their transaction hashes (/api/pool)
 fetch('/api/pool', { cache: 'no-store' }).then((r) => (r.ok && /json/.test(r.headers.get('content-type') || '') ? r.json() : null)).then((d) => { if (d?.report) { poolReport = d.report; renderLeaderboard(); } }).catch(() => {});

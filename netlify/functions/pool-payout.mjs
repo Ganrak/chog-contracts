@@ -5,7 +5,7 @@ import { payWeek } from '../lib/pool.mjs';
 
 export default async () => {
   const lastWeek = weekId(new Date(Date.now() - 24 * 3600 * 1000)); // the week that ended a few minutes ago
-  if (lastWeek !== POOL.week) return;
+  if (!POOL.active || lastWeek !== POOL.week) return;
   const report = await payWeek();
   console.log(`pool ${POOL.week}: ${report.mode}, ${report.winners.length} winners`);
 };
