@@ -940,10 +940,13 @@ $('#samples').addEventListener('click', (e) => { const b = e.target.closest('but
 /* ---------- the hunt: turn-based, in the arena ---------- */
 let stopCan = null;
 async function hunt(m) {
-  const p = prog(current), st = hunterStats(current, p);
+  const p = prog(current);
   const ranked = m.boss ? await rankedTicket(current).catch(() => null) : null; // the weekly boss counts on the shared board
+  // a ranked hunt is fought at the server's fixed level (as its replay is), so everyone meets the boss on equal terms
+  const lvl = ranked?.level || p.level, st = ranked?.level ? hunterStats(current, { level: lvl }) : hunterStats(current, p);
+  if (ranked?.level) toast(`Ranked hunt: every Chog fights the boss at <b>level ${lvl}</b>, so only traits and play decide the board.`);
   openHunt({
-    hunter: current, level: p.level, stats: st, monster: m, rand: ranked ? seededRand(ranked.seed) : Math.random,
+    hunter: current, level: lvl, stats: st, monster: m, rand: ranked ? seededRand(ranked.seed) : Math.random,
     art: current.ghost ? APPR_ARENA : art(current), beast: monsterArt(m.kind, true), monColor: MON_COLOR[m.kind] || MON_COLOR.wraith,
     bag: loadBag(), onQuaff: (i) => { usePotion(i); drink(p, i); saveProgress(progress); }, // one free potion per fight
     onFinish: (res, close, fled = 0) => {
@@ -962,7 +965,7 @@ async function hunt(m) {
       gain.avenged = res.win && (p.log || []).some((e) => !e.win && !e.trip && e.kind === m.kind && !e.avenged);
       remember(p, m, res, { hired: !!current.hired, chog: res.win ? bounty(m) : 0 });
       if (!res.win) injure(p, injuryHours(current)); // losing hurts: hours off, or pay a healer
-      if (m.boss) { bossLeft = Math.max(0.05, bossLeft - (res.win ? 0.06 : 0.02)); addBossDamage(res.dmg || 0, res.win); if (ranked) submitRanked(ranked, res, p.level); }
+      if (m.boss) { bossLeft = Math.max(0.05, bossLeft - (res.win ? 0.06 : 0.02)); addBossDamage(res.dmg || 0, res.win); if (ranked) submitRanked(ranked, res, lvl); }
       saveProgress(progress);
       setTimeout(() => showResult(m, res, gain, close), 1500); // time to see the win/lose line first
     },

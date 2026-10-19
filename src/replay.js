@@ -5,6 +5,9 @@ import { createFight, act, quaff, seededRand } from './combat.js';
 import { hunterStats, MONSTERS, bossWeek } from './game.js';
 
 export const MAX_LEVEL = 20, MAX_KEYS = 120;
+// On the weekly board every Chog fights the boss at this level, set by the server in the signed ticket. A level sent by
+// the browser can't be checked (progress lives in the browser), so it is never trusted: only traits and play decide.
+export const RANKED_LEVEL = 10;
 
 // a hunter name for the board: 3-16 letters, digits, _ or spaces; names that pose as the project are refused
 const RESERVED = /chog ?nft|chogcontract|monad|admin|official|support|moderator|team|ganraktv/i;

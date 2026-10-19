@@ -15,10 +15,11 @@ function secret() {
 }
 const mac = (body) => createHmac('sha256', secret()).update(body).digest('base64url');
 
-export function makeTicket(wallet) {
-  const t = { w: wallet.toLowerCase(), seed: randomBytes(4).readUInt32LE(0), nonce: randomBytes(12).toString('base64url'), iat: Date.now(), week: weekId() };
+export function makeTicket(wallet, level) {
+  // kind: 'hunt' keeps the other sealed tokens (a challenge, a pass) from ever being played as a hunt ticket
+  const t = { kind: 'hunt', w: wallet.toLowerCase(), seed: randomBytes(4).readUInt32LE(0), nonce: randomBytes(12).toString('base64url'), iat: Date.now(), week: weekId(), lv: level };
   const body = Buffer.from(JSON.stringify(t)).toString('base64url');
-  return { ticket: `${body}.${mac(body)}`, seed: t.seed };
+  return { ticket: `${body}.${mac(body)}`, seed: t.seed, level: t.lv };
 }
 export function readTicket(ticket) {
   const [body, sig] = String(ticket || '').split('.');
