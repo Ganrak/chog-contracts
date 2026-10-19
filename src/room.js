@@ -52,7 +52,7 @@ export const ITEMS = [
   { id: 'mask', name: 'Cardboard mask', ready: true, earn: { hint: 'Bring a real Chog', test: (s) => s.chogs >= 1 } },
   // wall pictures, drawn live: your own Chog's NFT art in a frame, and your Chog as a brick mosaic
   { id: 'portrait', name: 'Your Chog portrait', wall: true, live: true, ready: true, earn: { hint: 'Bring a real Chog', test: (s) => s.chogs >= 1 } },
-  { id: 'poster', name: 'Brick Chog poster', wall: true, live: true, ready: true, earn: { hint: 'Finish a Chog Drop', test: (s) => s.dropStars >= 1 } },
+  { id: 'poster', name: 'Brick Chog poster', wall: true, live: true, ready: true, earn: { hint: 'Build a Chog in Brick Studio', test: (s) => s.bricksBuilt } },
   ...MONSTERS.map((k) => ({ id: `trophy-${k}`, name: `${NAMES[k]} trophy`, img: `assets/monsters/${k}.png`, ready: true, earn: { hint: `Hunt a ${NAMES[k]}`, test: (s) => (s.trophies[k] || 0) >= 1 } })),
   // shop (test $CHOG)
   { id: 'candle', name: 'Candle', ready: true, price: 800 },

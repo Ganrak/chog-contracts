@@ -1177,7 +1177,7 @@ function roomStats() {
   const trophies = {}; for (const h of HUNTERS) for (const [k, n] of Object.entries(prog(h).trophies)) trophies[k] = (trophies[k] || 0) + n;
   let dropStars = 0;
   try { for (const k of Object.keys(localStorage)) if (k.startsWith('chog-contracts-drop-')) dropStars = Math.max(dropStars, JSON.parse(localStorage.getItem(k))?.stars || 0); } catch {}
-  return { trophies, wins: Object.values(trophies).reduce((a, b) => a + b, 0), streak: dailyState().streak, dropStars, chogs: HUNTERS.filter(isOwned).length };
+  return { trophies, wins: Object.values(trophies).reduce((a, b) => a + b, 0), streak: dailyState().streak, dropStars, chogs: HUNTERS.filter(isOwned).length, bricksBuilt: (() => { try { return localStorage.getItem('chog-contracts-brick-built') === '1'; } catch { return false; } })() };
 }
 const itemById = (id) => ROOM_ITEMS.find((it) => it.id === id);
 // your own Chog (loaded or verified) for the live wall pictures; the poster falls back to the sample Chog
@@ -1436,7 +1436,9 @@ async function openStudio() {
 // the workbench reports its state here: progress, this step's colours, and the save to keep
 const BUILD_KEY = (h, size) => `chog-contracts-bricks-${h.token}-${size}`;
 let saveT = 0, clickT = 0;
+const BUILT_KEY = 'chog-contracts-brick-built';
 function paintBench(s) {
+  if (s.finished) try { if (!localStorage.getItem(BUILT_KEY)) { localStorage.setItem(BUILT_KEY, '1'); toast('Built! The <b>Brick Chog poster</b> is now in Wannabe’s Room.'); } } catch {}
   $('#st-progress').innerHTML = s.finished ? `<b>Built!</b> ${s.total.toLocaleString('en-US')} pieces` : `Step <b>${s.step}</b> / ${s.steps} · ${s.placed.toLocaleString('en-US')} / ${s.total.toLocaleString('en-US')} pieces`;
   $('#st-colors').innerHTML = s.finished
     ? `<p class="done">${esc(studio.h.name)} is built. Turn it with Spin, or play Chog Drop below.</p>`
