@@ -1,6 +1,6 @@
 // The demo page's own code (moved out of demo.html so the Content-Security-Policy can forbid inline scripts).
 import { buildKit, randomTraits, seeded, ELEMENTS } from './kit.js';
-import { MONSTERS, monsterFromPost, remember, injure, injuredLeft, healNow, spendChog, grantChog, INJURY_H, HEAL_COST, tuckIn, tuckWait, TUCK_MIN, TUCK_EVERY_MIN, bounty, payBounty, chogBalance, fmtChog, dailyContracts, dailyState, winDaily, dayKey, loadProgress, saveProgress, fresh, xpToNext, hunterStats, matchup, settle, drink, loadBag, addPotion, usePotion, newOwner } from './game.js';
+import { MONSTERS, monsterFromPost, remember, injure, injuredLeft, healNow, spendChog, grantChog, INJURY_H, HEAL_COST, tuckIn, tuckWait, TUCK_MIN, TUCK_EVERY_MIN, bounty, payBounty, chogBalance, fmtChog, dailyContracts, dailyState, winDaily, dayKey, loadProgress, saveProgress as saveProgressLocal, fresh, xpToNext, hunterStats, matchup, settle, drink, loadBag, addPotion, usePotion, newOwner } from './game.js';
 import { simulate, seededRand } from './combat.js';
 import { lbMessage, cleanName } from './replay.js';
 import { openHunt } from './arena.js';
@@ -145,6 +145,62 @@ $('#hire').addEventListener('click', (e) => {
 
 /* ---------- state ---------- */const progress = loadProgress();
 const prog = (h) => (progress[h.id] ||= fresh());
+
+/* ---------- the story lives with the token (netlify/functions/chog.mjs) ----------
+   A Chog's level, journal, scars and trophies are kept on the server under its token id, so they show up on any
+   device and follow the NFT to its next owner. Anyone can read them; only the current holder can write, and only
+   when this week's proof (signature or self-transfer pass) is already at hand: syncing never pops up a request. */
+const SYNC_SKIP = new Set(['editedAt', 'syncedAt', 'owner']);
+const storyOf = (p) => { const o = {}; for (const [k, v] of Object.entries(p)) if (!SYNC_SKIP.has(k)) o[k] = v; if (Array.isArray(o.log)) o.log = o.log.slice(-150); return o; };
+const snap = {}; for (const [id, p] of Object.entries(progress)) if (/^t\d+$/.test(id)) snap[id] = JSON.stringify(storyOf(p));
+let syncTimer = 0, storyApi = true, toldSynced = false;
+// every save notes which Chogs really changed, then a quiet upload follows a moment later
+function saveProgress(all) {
+  for (const [id, p] of Object.entries(all)) {
+    if (!/^t\d+$/.test(id)) continue;
+    const j = JSON.stringify(storyOf(p));
+    if (j !== snap[id]) { snap[id] = j; p.editedAt = Date.now(); }
+  }
+  saveProgressLocal(all);
+  clearTimeout(syncTimer); syncTimer = setTimeout(pushStories, 2500);
+}
+function cachedProof() {
+  const pass = myPass(); if (pass) return { pass };
+  try { const s = JSON.parse(localStorage.getItem(SIG_KEY)); if (s && wAddr && s.week === weekId() && s.wallet === wAddr.toLowerCase()) return { signature: s.sig }; } catch {}
+  return null;
+}
+async function pushStories() {
+  if (!storyApi || !wAddr) return;
+  const proof = cachedProof(); if (!proof) return;
+  for (const tok of ownedTokens()) {
+    const p = progress[`t${tok}`];
+    if (!p || !(p.editedAt > (p.syncedAt || 0)) || whaleTest().includes(tok)) continue;
+    const r = await fetch('/api/chog', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wallet: wAddr, token: tok, story: storyOf(p), week: weekId(), ...proof }) }).catch(() => null);
+    if (!r || !/json/.test(r.headers.get('content-type') || '')) { storyApi = false; return; } // no server here (preview)
+    const out = await r.json().catch(() => ({}));
+    if (r.ok && out.updated) {
+      p.syncedAt = out.updated; saveProgressLocal(progress);
+      if (!toldSynced) { toldSynced = true; toast('Saved to the token: this Chog\'s story now follows it to any device and any next owner.'); }
+    }
+  }
+}
+// pull the server's copy for these tokens; it wins unless this browser has newer, unsent changes
+async function pullStories(tokens) {
+  const list = [...new Set(tokens.map(Number))].filter((n) => n > 0).slice(0, 60);
+  if (!storyApi || !list.length) return;
+  const r = await fetch(`/api/chog?tokens=${list.join(',')}`, { cache: 'no-store' }).catch(() => null);
+  if (!r?.ok || !/json/.test(r.headers.get('content-type') || '')) { storyApi = false; return; }
+  const { stories = {} } = await r.json().catch(() => ({}));
+  let changed = false;
+  for (const [tok, s] of Object.entries(stories)) {
+    const id = `t${tok}`, local = progress[id];
+    if (local && (local.editedAt || 0) > (s.updated || 0)) continue;
+    if (local && local.syncedAt === s.updated) continue;
+    progress[id] = { ...fresh(), ...s.story, owner: s.owner, syncedAt: s.updated, editedAt: s.updated };
+    snap[id] = JSON.stringify(storyOf(progress[id])); changed = true;
+  }
+  if (changed) { saveProgressLocal(progress); renderAll(); }
+}
 let current = HUNTERS[0];
 syncHires();
 try { const saved = localStorage.getItem('chog-contracts-demo-hunter'); if (saved) current = HUNTERS.find((h) => h.id === saved) || current; } catch {}
@@ -548,7 +604,7 @@ async function weeklySig(refused) {
   let saved = null; try { saved = JSON.parse(localStorage.getItem(SIG_KEY)); } catch {}
   if (saved && saved.week === week && saved.wallet === wAddr.toLowerCase()) return saved.sig;
   const sig = await signText(wActive, wAddr, lbMessage(wAddr, week), refused).catch(() => null);
-  if (sig) try { localStorage.setItem(SIG_KEY, JSON.stringify({ week, wallet: wAddr.toLowerCase(), sig })); } catch {}
+  if (sig) { try { localStorage.setItem(SIG_KEY, JSON.stringify({ week, wallet: wAddr.toLowerCase(), sig })); } catch {} setTimeout(pushStories, 500); }
   return sig;
 }
 // or, without connecting: a pass from sending MON to yourself (see the self-transfer box in the wallet window)
@@ -661,7 +717,7 @@ $('#bring').addEventListener('submit', async (e) => {
     const found = isWallet ? await walletChogs(v, { onProgress: scanning }) : [await readChog(id)];
     if (!found.length) { msg.textContent = 'No Chog Genesis in this wallet yet. You can still hunt as the Wannabe Chog, or try a token id.'; return; }
     const list = addHunters(found.slice(0, MAX_CHOGS).map(asHunter));
-    saveBrought();
+    saveBrought(); pullStories(found.map((c) => c.tokenId));
     current = list[0];
     try { localStorage.setItem('chog-contracts-demo-hunter', current.id); } catch {}
     const yours = list.some(isOwned);
@@ -721,6 +777,7 @@ async function pickWallet(w) {
   try {
     const found = await walletChogs(wAddr, { onProgress: (p) => { $('#wsum').innerHTML = `<b>${esc(short(wAddr))}</b> · checking all 1,969 Chogs on Monad… ${Math.round(p * 100)}%`; } });
     wTokens = found.map((c) => c.tokenId); setOwned(wTokens); // the connected wallet holds these: they're yours
+    await pullStories(wTokens); // their story comes from the token first (it may have lived elsewhere)
     noteOwners(wAddr, wTokens);
     if (found.length) {
       const list = addHunters(found.slice(0, MAX_CHOGS).map(asHunter)); saveBrought();
@@ -783,7 +840,7 @@ $('#sp-check').addEventListener('click', async () => {
   wTokens = []; setOwned([]);
   try {
     const found = await walletChogs(wAddr);
-    wTokens = found.map((c) => c.tokenId); setOwned(wTokens); noteOwners(wAddr, wTokens);
+    wTokens = found.map((c) => c.tokenId); setOwned(wTokens); await pullStories(wTokens); noteOwners(wAddr, wTokens);
     if (found.length) { const list = addHunters(found.slice(0, MAX_CHOGS).map(asHunter)); saveBrought(); current = list[0]; try { localStorage.setItem('chog-contracts-demo-hunter', current.id); } catch {} }
     renderAll(); renderLeaderboard();
     toast(found.length ? `You're in: <b>${found.length} Chog${found.length > 1 ? 's' : ''}</b> on your list. Boss hunts count on the board this week.` : 'You\'re in. This wallet holds no Chog Genesis yet: hunt as the Wannabe Chog, or hire one.');
@@ -1464,6 +1521,7 @@ document.addEventListener('visibilitychange', () => drop?.pause(document.hidden 
 renderAll(); renderHire(); payRentals(); // rentals that finished while you were away get paid now
 if (['#arcade', '#brick', '#room'].includes(location.hash)) setTab(location.hash.slice(1));
 startGlow(); // cards light up where the mouse is (src/glow.js)
+pullStories(HUNTERS.filter((h) => h.brought && !h.hired && h.token).map((h) => h.token)).then(pushStories); // stories from the tokens
 startTouches(); // numbers roll up, buttons spring (src/motion.js)
 loadLive(); // the shared weekly board, when the site runs with its server
 /* back to the top: the button shows once you're well down the page; a purple wave rises with the Wannabe, the page
