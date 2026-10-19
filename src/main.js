@@ -21,6 +21,7 @@ import { startGlow } from './glow.js';
 import { startGateLines } from './gatelines.js';import { play as sfx, sfxOn, setSfx } from './sfx.js';
 import { drawShareCard, shareHunt, saveCard, shareImage } from './share.js';
 import { musicOn, setMusic } from './music.js';
+import { startMotion as startTouches } from './motion.js';
 import { listWallets, connect, ownershipMessage, signOwnership, listingMessage, signText, disconnect, load as loadWallet, short } from './wallet.js';
 
 const $ = (s) => document.querySelector(s);
@@ -1463,6 +1464,7 @@ document.addEventListener('visibilitychange', () => drop?.pause(document.hidden 
 renderAll(); renderHire(); payRentals(); // rentals that finished while you were away get paid now
 if (['#arcade', '#brick', '#room'].includes(location.hash)) setTab(location.hash.slice(1));
 startGlow(); // cards light up where the mouse is (src/glow.js)
+startTouches(); // numbers roll up, buttons spring (src/motion.js)
 loadLive(); // the shared weekly board, when the site runs with its server
 /* back to the top: the button shows once you're well down the page; a purple wave rises with the Wannabe, the page
    jumps to the top behind it, and the wave carries on up and away (as on the Tatlıca site, without GSAP) */
