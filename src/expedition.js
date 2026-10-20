@@ -14,11 +14,11 @@ export const PLACES = [
   { id: 'crypt', name: 'Deadchain Crypt', kind: 'ghoul', weak: 'fire', blurb: 'Where dead chains are buried.' },
 ];
 export const TRIPS = [
-  { id: 'short', name: 'Short', hours: 1, risk: 0.08, xp: 40, chog: 20 },
-  { id: 'mid', name: 'Medium', hours: 8, risk: 0.2, xp: 120, chog: 60 },
-  { id: 'long', name: 'Long', hours: 24, risk: 0.35, xp: 280, chog: 150 },
+  { id: 'short', name: 'Short', hours: 1, risk: 0.08, xp: 40, chog: 150 },
+  { id: 'mid', name: 'Medium', hours: 8, risk: 0.2, xp: 120, chog: 600 },
+  { id: 'long', name: 'Long', hours: 24, risk: 0.35, xp: 280, chog: 1500 },
 ];
-export const SNACKS = 30; // test $CHOG
+export const SNACKS = 300; // test $CHOG
 const FAST_KEY = 'chog-contracts-fast-trips';
 export const fastMode = () => { try { return localStorage.getItem(FAST_KEY) === '1'; } catch { return false; } };
 export const setFastMode = (on) => { try { localStorage.setItem(FAST_KEY, on ? '1' : '0'); } catch {} };
@@ -297,7 +297,7 @@ export function tripResult(t, element) {
   return {
     ok, match, bold, decided: t.choice.pick ? 'you' : 'chog',
     xp: Math.round(trip.xp * mult * (ok ? 1 : 0.4)),
-    chog: ok ? Math.round(trip.chog * mult) : 0,
+    chog: ok ? Math.round(trip.chog * mult / 50) * 50 : 0,
     hurt: !ok && trip.id !== 'short',
     ending: ok ? GOOD_LINES[t.seed % GOOD_LINES.length] : HURT_LINES[t.seed % HURT_LINES.length],
     // what came of the halfway choice (older trips may not have it)

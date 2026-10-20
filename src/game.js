@@ -163,8 +163,8 @@ export function settle(p, m, win, mult) {
    Each contract pays a bounty on a win; with a hired Chog the owner gets OWNER_SHARE of it.
    Demo amounts are test numbers kept in this browser; in the game they'd come from a bounty pool. */
 export const OWNER_SHARE = 0.3;
-// test $CHOG: training 100, a contract 300-650 by power (rounded to 50), the weekly boss 3,000. Real $CHOG only comes from the weekly pool.
-export const bounty = (m) => (m.training ? 100 : m.boss ? 3000 : Math.round(m.power * 5 / 50) * 50);
+// test $CHOG: training 500, a contract 3,000-6,500 by power (rounded to 500), the weekly boss 25,000. Real $CHOG only comes from the weekly pool.
+export const bounty = (m) => (m.training ? 500 : m.boss ? 25000 : Math.round(m.power * 50 / 500) * 500);
 export const fmtChog = (n) => Math.round(n).toLocaleString('en-US');
 const WALLET_KEY = 'chog-contracts-chog';
 export function chogBalance() { try { return Number(localStorage.getItem(WALLET_KEY)) || 0; } catch { return 0; } }
@@ -184,7 +184,7 @@ export function payBounty(m, hired) {
 
 /* ---------- losing hurts: the hunter is injured (no hunting) for 3 h, or 1.5 h for a Chog you own; a healer
    patches it up now for test $CHOG. Never touches the NFT or the wallet; only this game's progress. ---------- */
-export const INJURY_H = { owner: 1.5, other: 3 }, HEAL_COST = 100;
+export const INJURY_H = { owner: 1.5, other: 3 }, HEAL_COST = 1000;
 export const injuredLeft = (p) => Math.max(0, (p.hurtUntil || 0) - Date.now());
 export function injure(p, hours) { p.hurtUntil = Date.now() + hours * 3600000; }
 export function healNow(p) {

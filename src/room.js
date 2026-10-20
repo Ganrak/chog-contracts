@@ -55,20 +55,20 @@ export const ITEMS = [
   { id: 'poster', name: 'Brick Chog poster', wall: true, live: true, ready: true, earn: { hint: 'Build a Chog in Brick Studio', test: (s) => s.bricksBuilt } },
   ...MONSTERS.map((k) => ({ id: `trophy-${k}`, name: `${NAMES[k]} trophy`, img: `assets/monsters/${k}.png`, ready: true, earn: { hint: `Hunt a ${NAMES[k]}`, test: (s) => (s.trophies[k] || 0) >= 1 } })),
   // shop (test $CHOG)
-  { id: 'candle', name: 'Candle', ready: true, price: 80 },
-  { id: 'books', name: 'Stack of books', ready: true, price: 100 },
-  { id: 'cactus', name: 'Little cactus', ready: true, price: 150 },
-  { id: 'piggy', name: 'Piggy bank', ready: true, price: 200 },
-  { id: 'sword', name: 'Toy sword', ready: true, price: 250 },
-  { id: 'globe', name: 'Snow globe', ready: true, price: 300 },
-  { id: 'frame', name: 'Monad picture', wall: true, ready: true, price: 400 },
-  { id: 'lava', name: 'Lava lamp', ready: true, price: 500 },
+  { id: 'candle', name: 'Candle', ready: true, price: 800 },
+  { id: 'books', name: 'Stack of books', ready: true, price: 1000 },
+  { id: 'cactus', name: 'Little cactus', ready: true, price: 1500 },
+  { id: 'piggy', name: 'Piggy bank', ready: true, price: 2000 },
+  { id: 'sword', name: 'Toy sword', ready: true, price: 2500 },
+  { id: 'globe', name: 'Snow globe', ready: true, price: 3000 },
+  { id: 'frame', name: 'Monad picture', wall: true, ready: true, price: 4000 },
+  { id: 'lava', name: 'Lava lamp', ready: true, price: 5000 },
 ].map((it) => ({ img: `assets/room/items/${it.id}.png`, ...it }));
 
 /* colours for the painted curtains (the rug was tried too, but its edges never recoloured cleanly): recoloured copies of those exact pixels (scripts/recolor-region.ps1),
    laid over the painting; 'purple' is the painting itself. Box = where the copy sits, in % of the stage. */
 export const PAINTS = {
-  curtains: { name: 'Curtains', dir: 'curtains', box: [86.54, 4.04, 7.00, 40.06], price: 100 },
+  curtains: { name: 'Curtains', dir: 'curtains', box: [86.54, 4.04, 7.00, 40.06], price: 1000 },
 };
 export const COLORS = [['purple', '#8a5cd6'], ['red', '#c8323c'], ['teal', '#1fa69a'], ['gold', '#d9a227'], ['green', '#3f9a3a'], ['blue', '#3a6fd1']];
 

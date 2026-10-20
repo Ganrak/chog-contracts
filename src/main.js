@@ -1148,7 +1148,7 @@ function setGame(g) {
   if (g === 'run' && !runner) {
     runner = startRunner($('#run-cv'), { onState: (s) => {
       if (!s.over) return;
-      const reward = s.coins; if (reward) { grantChog(reward); renderMe(); }
+      const reward = s.coins * 5; if (reward) { grantChog(reward); renderMe(); }
       sfx(reward ? 'coin' : 'hurt');
       $('#run-msg').innerHTML = `Score <b>${s.score}</b> · best <b>${s.best}</b>${s.coins ? ` · <span class="gold">+${fmtChog(reward)} test $CHOG</span> from ${s.coins} coin${s.coins > 1 ? 's' : ''}` : ''}`;
       $('#run-start').textContent = 'Run again'; $('#run-over').hidden = false;
@@ -1168,7 +1168,7 @@ const CAP_COL = { common: '#836ef9', uncommon: '#5bc8ff', rare: '#e845a4', legen
 function givePrize(p) {
   if (p.kind === 'xp') {
     const h = current, q = h && !h.hired && !isPreview(h) ? prog(h) : null;
-    if (!q) { const n = Math.round(p.n / 2); grantChog(n); return `No Chog of yours picked, so it came as <b>+${fmtChog(n)} test $CHOG</b>.`; }
+    if (!q) { const n = p.n * 5; grantChog(n); return `No Chog of yours picked, so it came as <b>+${fmtChog(n)} test $CHOG</b>.`; }
     q.xp += p.n; let up = false;
     while (q.xp >= xpToNext(q.level)) { q.xp -= xpToNext(q.level); q.level += 1; up = true; }
     saveProgress(progress); renderAll();
@@ -1178,7 +1178,7 @@ function givePrize(p) {
   if (p.kind === 'potion') { const i = Math.floor(Math.random() * 3); addPotion(i); return `A ${esc(['Health', 'Mana', 'Power'][i])} potion went into your bag.`; }
   // a room item from the shop, free; if you have them all, test $CHOG instead
   const left = ROOM_ITEMS.filter((it) => it.price && !room.bought.includes(it.id));
-  if (!left.length) { grantChog(150); renderMe(); p.label = '+150 test $CHOG'; return 'You own every shop item already, so here is test $CHOG.'; }
+  if (!left.length) { grantChog(1500); renderMe(); p.label = '+1,500 test $CHOG'; return 'You own every shop item already, so here is test $CHOG.'; }
   const it = left[Math.floor(Math.random() * left.length)];
   room.bought.push(it.id); saveRoom(room); p.label = it.name;
   return `A new item for Wannabe's Room. Place it from Decorate.`;
@@ -1270,7 +1270,7 @@ function renderDeco() {
       const note = on ? 'In the room' : have ? (it.wall ? 'Hang it up' : 'Put it up') : it.price ? `Buy · ${fmtChog(it.price)} test $CHOG` : it.earn.hint;
       return `<button type="button" class="r-item ${state}" data-item="${it.id}" ${state === 'locked' ? 'aria-disabled="true"' : ''}>${itemArt(it)}<b>${esc(it.name)}</b><small>${esc(note)}</small></button>`; }).join('')}</div>
     ${paintRow('curtains')}${fastMode() ? `<div class="r-paint-row"><b>Light (test)</b>${[['auto', 'Auto'], ['day', 'Morning'], ['dusk', 'Evening'], ['night', 'Night']].map(([v, l]) => `<button type="button" class="r-light" data-light="${v}" aria-pressed="${lightPick() === v}">${l}</button>`).join('')}</div>` : ''}
-    <div class="acts"><button type="button" class="btn ghost" id="r-faucet" title="Demo only: test tokens, worth nothing">+1,000 test $CHOG</button></div>`;
+    <div class="acts"><button type="button" class="btn ghost" id="r-faucet" title="Demo only: test tokens, worth nothing">+10,000 test $CHOG</button></div>`;
 }
 // the room's two corner buttons: snap a photo, and the gear that opens decorating
 $('#r-cam').addEventListener('click', () => shareRoom());
@@ -1286,7 +1286,7 @@ $('#r-deco').addEventListener('click', (e) => {
   if (e.target.closest('[data-deco-close]')) { decoOpen = false; selSlot = null; renderDeco(); return; }
   const lb = e.target.closest('[data-light]');
   if (lb) { try { localStorage.setItem(LIGHT_KEY, lb.dataset.light); } catch {} sfx('click'); renderDeco(); return; }
-  if (e.target.closest('#r-faucet')) { grantChog(1000); sfx('coin'); renderMe(); renderDeco(); kidSay('Ooh, shiny test tokens! Let\'s go shopping.'); return; }
+  if (e.target.closest('#r-faucet')) { grantChog(10000); sfx('coin'); renderMe(); renderDeco(); kidSay('Ooh, shiny test tokens! Let\'s go shopping.'); return; }
   const p = e.target.closest('[data-paint]');
   if (p) { // rug / curtain colours: purple is the painting, the rest are bought once
     const [part, c] = p.dataset.paint.split(':'), key = `${part}-${c}`;
