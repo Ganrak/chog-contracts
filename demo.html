@@ -503,16 +503,16 @@ a.mark, .foot a.mark{color:var(--fg); text-decoration:none; border:0; width:max-
 .pow text{font:400 21px/1 var(--display); letter-spacing:.02em; text-anchor:middle; fill:#e2333d; stroke:#1b1430; stroke-width:1.2; paint-order:stroke}
 @keyframes pow{0%{transform:scale(0) rotate(-25deg)} 30%{transform:scale(1.15) rotate(-8deg)} 45%{transform:scale(1) rotate(-10deg)} 80%{opacity:1} 100%{transform:scale(1.05) rotate(-10deg); opacity:0}}
 /* fire hit: a fireball bursts (white core, yellow, orange, red rim, dark smoke edge) */
-.fireboom{position:absolute; width:190px; height:190px; margin:-95px 0 0 -95px; border-radius:50%; pointer-events:none; mix-blend-mode:screen;
-  background:radial-gradient(circle, #fffbe0 0 10%, #ffe35a 22%, #ff9a1f 40%, #e2333d 58%, rgba(120,20,10,.5) 68%, transparent 72%);
-  filter:blur(1.5px) drop-shadow(0 0 30px #ff7a1a); animation:fireboom .75s cubic-bezier(.15,.8,.3,1) forwards}
+.fireboom{position:absolute; width:190px; height:190px; margin:-95px 0 0 -95px; pointer-events:none;
+  filter:drop-shadow(0 0 26px #ff7a1a); animation:fireboom .75s cubic-bezier(.15,.8,.3,1) forwards}
+.fireboom img{width:100%; height:100%; object-fit:contain; display:block}
 .fireboom.big{width:280px; height:280px; margin:-140px 0 0 -140px}
 @keyframes fireboom{0%{transform:scale(.15); opacity:1} 30%{transform:scale(1); opacity:1} 100%{transform:scale(1.35) translateY(-18px); opacity:0}}
 /* burn: tongues of fire wrap the monster */
-.burnfx{position:absolute; width:var(--w); height:var(--h); margin:calc(var(--h) * -1) 0 0 calc(var(--w) / -2); pointer-events:none; mix-blend-mode:screen}
-.burnfx i{position:absolute; bottom:var(--b, 0px); left:calc(50% + var(--x) * .5); width:calc(var(--w) * .13); height:calc(var(--h) * var(--s)); margin-left:calc(var(--w) * -.065); transform-origin:50% 100%;
-  border-radius:50% 50% 38% 38% / 70% 70% 30% 30%; background:radial-gradient(ellipse 50% 60% at 50% 80%, #fff6c8 0 14%, #ffd23f 30%, #ff8a1f 52%, rgba(226,51,61,.8) 70%, transparent 74%);
-  filter:blur(.8px); opacity:0; animation:flameRise 1.2s ease-out var(--dl) forwards, flameFlick var(--fd) steps(2) infinite alternate}
+.burnfx{position:absolute; width:var(--w); height:var(--h); margin:calc(var(--h) * -1) 0 0 calc(var(--w) / -2); pointer-events:none}
+.burnfx i{position:absolute; bottom:var(--b, 0px); left:calc(50% + var(--x) * .5); width:calc(var(--w) * .24); height:calc(var(--h) * var(--s)); margin-left:calc(var(--w) * -.12); transform-origin:50% 100%;
+  background:var(--img) center bottom / contain no-repeat;
+  filter:drop-shadow(0 0 10px rgba(255,140,30,.8)); opacity:0; animation:flameRise 1.2s ease-out var(--dl) forwards, flameFlick var(--fd) steps(2) infinite alternate}
 .burnfx.small i{animation-duration:.85s, var(--fd)}
 @keyframes flameRise{0%{transform:scaleY(.1); opacity:0} 18%{transform:scaleY(1.1); opacity:.85} 55%{transform:scaleY(.95) translateY(-6%); opacity:.75} 100%{transform:scaleY(.3) translateY(-40%); opacity:0}}
 @keyframes flameFlick{to{scale:.82 1.1}}
@@ -1379,7 +1379,8 @@ body.tab-room .wrap > section:not(#room){display:none}
 .cap-machine.spinning .cap-crank{animation:capCrank .9s cubic-bezier(.3,.7,.3,1)}
 @keyframes capCrank{to{transform:rotate(360deg)}}
 .cap-slot{position:absolute; right:16%; top:64px; width:58px; height:46px; border-radius:12px; background:#2a1027; box-shadow:inset 0 4px 10px rgba(0,0,0,.6)}
-.cap-ball{position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:linear-gradient(180deg, var(--c, #ffd66b) 50%, #f4f1fe 50%); opacity:0}
+.cap-ball{position:absolute; left:50%; top:50%; width:38px; height:38px; margin:-19px 0 0 -19px; background:url(assets/capsule/capsule.png) center / contain no-repeat; filter:hue-rotate(var(--hr, 0deg)); opacity:0}
+.cap-ball.gold{background-image:url(assets/capsule/golden.png)}
 .cap-machine.dropped .cap-ball{animation:capDrop .5s cubic-bezier(.3,1.5,.5,1) forwards}
 @keyframes capDrop{from{opacity:0; transform:translateY(-30px) scale(.6)} to{opacity:1; transform:none}}
 .cap-side{display:flex; flex-direction:column; gap:14px}
@@ -1387,12 +1388,15 @@ body.tab-room .wrap > section:not(#room){display:none}
 .cap-tokens span{font:700 11px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
 .cap-tokens b{font:400 44px/1 var(--display); color:#ffd66b; text-shadow:0 0 18px rgba(255,214,107,.4)}
 .cap-tokens small{font:600 12px/1 var(--mono); color:var(--muted)}
-.cap-result{padding:14px 16px; border-radius:14px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.04); font-size:15px}
-.cap-result > b:first-child{display:block; margin-bottom:4px; font:400 26px/1.1 var(--display); letter-spacing:.02em}
+.cap-result{display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:14px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.04); font-size:15px}
+.cap-prize{width:72px; height:72px; object-fit:contain; flex:none; filter:drop-shadow(0 6px 12px rgba(0,0,0,.4)); animation:capPop .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes capPop{from{transform:scale(.2) rotate(-20deg); opacity:0}}
+.cap-result div > b:first-child{display:block; margin-bottom:4px; font:400 26px/1.1 var(--display); letter-spacing:.02em}
 .cap-result.t-uncommon{border-color:rgba(91,200,255,.5)} .cap-result.t-rare{border-color:rgba(232,69,164,.7); box-shadow:0 0 30px -8px rgba(232,69,164,.7)} .cap-result.t-legend{border-color:#ffd66b; box-shadow:0 0 40px -6px rgba(255,214,107,.8)}
 .cap-earn{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:13px; color:var(--muted)} .cap-earn b{color:#ffd66b}
 .cap-odds summary{cursor:pointer; font:600 12px/1.4 var(--mono); color:#c9bfff}
-.cap-odds ul{margin:8px 0 0; padding-left:18px; font-size:13px; color:var(--muted)}
+.cap-odds ul{list-style:none; margin:8px 0 0; padding:0; display:grid; gap:4px; font-size:13px; color:var(--muted)}
+.cap-odds li{display:flex; align-items:center; gap:8px} .cap-odds li img{width:24px; height:24px; object-fit:contain} .cap-odds li b{margin-left:auto; color:var(--fg); font-family:var(--mono)}
 @media (max-width:760px){ .capsule{grid-template-columns:1fr} .cap-earn{grid-template-columns:1fr} }
 .drop{display:grid; grid-template-columns:minmax(0, 560px) minmax(0, 1fr); gap:18px; padding:16px; border-radius:20px; border:1px solid var(--line-bright); background:radial-gradient(90% 80% at 20% 0%, rgba(131,110,249,.18), transparent 60%), var(--night-2)}
 .drop-board{position:relative}

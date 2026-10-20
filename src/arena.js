@@ -257,7 +257,7 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
     },
     // fire: a fireball bursts on the monster and flames lick up its body
     fire(node, color, big) {
-      fxEl(`fireboom${big ? ' big' : ''}`, node, color, 800);
+      const fb = fxEl(`fireboom${big ? ' big' : ''}`, node, color, 800); if (fb) fb.innerHTML = '<img src="assets/fx/fireball.png" alt="">';
       burnFx(node, !big);
     },
     // charm: a big painted heart pops on the monster, then breaks in two (assets/fx/heart, heartbroken)
@@ -325,7 +325,8 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
     f.style.setProperty('--w', `${c.w * 0.95}px`); f.style.setProperty('--h', `${c.h * (small ? 0.6 : 0.95)}px`);
     f.innerHTML = Array.from({ length: n }, (_, i) => { // ragged tongues: uneven heights, some licking up from the body, gaps to see through
       const x = ((i + 0.5) / n - 0.5) * 100 + (Math.random() - 0.5) * 8, mid = 1 - Math.abs(x) / 60;
-      return `<i style="--x:${x.toFixed(1)}%;--s:${(0.3 + mid * 0.4 + Math.random() * 0.35).toFixed(2)};--b:${(Math.random() < 0.35 ? Math.random() * 30 : 0).toFixed(0)}%;--dl:${(Math.random() * 0.3).toFixed(2)}s;--fd:${(0.1 + Math.random() * 0.1).toFixed(2)}s"></i>`;
+      const art = small && i % 2 ? 'flame-embers' : i % 2 ? 'flame-2' : 'flame-1';
+      return `<i style="--img:url(assets/fx/${art}.png);--flip:${Math.random() < 0.5 ? -1 : 1};--x:${x.toFixed(1)}%;--s:${(0.3 + mid * 0.4 + Math.random() * 0.35).toFixed(2)};--b:${(Math.random() < 0.35 ? Math.random() * 30 : 0).toFixed(0)}%;--dl:${(Math.random() * 0.3).toFixed(2)}s;--fd:${(0.1 + Math.random() * 0.1).toFixed(2)}s"></i>`;
     }).join('');
     burst(node, { n: small ? 8 : 18, color: '#FF8A1F', cls: 'flame', up: 110, grav: -70, spread: 90, size: [6, 13], dur: 900 });
     tint(node, 'scorch', small ? 800 : 1300);

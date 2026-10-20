@@ -24,7 +24,8 @@ Copy-Item "$root\assets\room\*.jpg" "$out\assets\room\"      # the painted Wanna
 Copy-Item "$root\assets\map\*.webp" "$out\assets\map\"       # the painted expedition map
 Copy-Item "$root\assets\arcade\*.webp" "$out\assets\arcade\" # the painted arcade room
 'ghoul', 'troll', 'thief', 'golem', 'harpy', 'wraith', 'boss' | ForEach-Object { Copy-Item "$root\assets\arena\$_.webp" "$out\assets\arena\" }  # painted arenas (not the source sheet or PNG)
-Copy-Item "$root\assets\fx\*.webp" "$out\assets\fx\"  # painted icons sheet + effect stickers (the source PNGs stay out)
+Copy-Item "$root\assets\fx\*.webp", "$root\assets\fx\*.png" "$out\assets\fx\"  # painted icons sheet, effect stickers and fire art
+New-Item -ItemType Directory -Force "$out\assets\capsule" | Out-Null; Copy-Item "$root\assets\capsule\*.png" "$out\assets\capsule\"  # Chog Capsule prize art (cut by scripts/key-sheet.ps1)
 Copy-Item "$root\assets\room\items\*.png" "$out\assets\room\items\"  # things to decorate it with
 Copy-Item "$root\assets\room\curtains\*.png" "$out\assets\room\curtains\"  # recoloured curtains
 if (Test-Path "$root\data\chogs.json") { Copy-Item "$root\data\chogs.json" "$out\data\" }

@@ -1162,7 +1162,7 @@ function renderCapsule() {
   $('#cap-count').textContent = String(c.tokens);
   $('#cap-next').textContent = c.tokens >= MAX_TOKENS ? 'full' : `next free one in ${nextFreeIn()}`;
   $('#cap-spin').disabled = c.tokens < 1;
-  $('#cap-odds').innerHTML = capsuleOdds().map((o) => `<li>${esc(o.label)}: ${o.pct}%</li>`).join('');
+  $('#cap-odds').innerHTML = capsuleOdds().map((o) => `<li><img src="assets/capsule/${o.img}.png" alt="">${esc(o.label)}<b>${o.pct}%</b></li>`).join('');
 }
 const CAP_COL = { common: '#836ef9', uncommon: '#5bc8ff', rare: '#e845a4', legend: '#ffd66b' };
 function givePrize(p) {
@@ -1189,12 +1189,12 @@ $('#cap-spin').addEventListener('click', () => {
   const p = capsuleSpin(); if (!p) { renderCapsule(); return; }
   sfx('click'); $('#cap-result').hidden = true; $('#cap-spin').disabled = true;
   m.classList.remove('dropped'); m.classList.add('spinning');
-  $('#cap-ball').style.setProperty('--c', CAP_COL[p.tier]);
+  $('#cap-ball').style.setProperty('--c', CAP_COL[p.tier]); $('#cap-ball').classList.toggle('gold', p.tier === 'legend');
   setTimeout(() => {
     m.classList.remove('spinning'); m.classList.add('dropped');
     const line = givePrize(p);
     const r = $('#cap-result'); r.className = `cap-result t-${p.tier}`;
-    r.innerHTML = `<b>${esc(p.label)}</b>${line}`; r.hidden = false;
+    r.innerHTML = `<img class="cap-prize" src="assets/capsule/${p.img}.png" alt=""><div><b>${esc(p.label)}</b>${line}</div>`; r.hidden = false;
     sfx(p.tier === 'legend' || p.tier === 'rare' ? 'win' : 'coin'); renderCapsule();
   }, 950);
 });
