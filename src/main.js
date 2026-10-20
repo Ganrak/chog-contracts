@@ -124,7 +124,7 @@ function renderHire() {
     const k = buildKit(c.traits, { name: c.name }), E = k.elementInfo, left = hoursLeft(c), st = hunterStats(c, prog(c));
     return `<article class="offer${left ? ' hired' : ''}" id="offer-${c.token}" style="--c:${E.color}">
       <img src="${img(c.img)}" alt="${esc(c.name)}, token ${c.token}">
-      <div><h3>${esc(c.name)}</h3><p>${esc(k.classInfo.name)} · Power ${st.power}</p>${(() => { const s = demoOwnerStats(c.token); return `<p class="own-earn">Owner earned <b>${fmtChog(s.earned)} $CHOG</b> from ${s.rentals} rentals</p>`; })()}
+      <div><h3>${esc(c.name)}</h3><p>${esc(k.classInfo.name)} · Power ${st.power}</p>${(() => { const s = demoOwnerStats(c.token); return `<p class="own-earn">Owner earned <b>${fmtChog(s.earned)} test $CHOG</b> from ${s.rentals} rentals</p>`; })()}
       <div class="row"><span class="chip" style="--c:${E.color}"><i></i>${E.name}</span>${left
         ? `<button type="button" class="btn ghost" data-use="${c.token}">Hunt · ${left} h left</button>`
         : `<button type="button" class="btn" data-hire="${c.token}">Hire 24 h</button>`}</div></div>
@@ -224,8 +224,8 @@ const avatar = (h) => (h.ghost ? APPR_FACE : `<img src="${img(h.img)}" alt="">`)
 function renderMe() {
   const st = hunterStats(current, prog(current)), p = prog(current);
   $('#me').innerHTML = `<span class="av">${avatar(current)}<i class="dot${wAddr ? ' on' : ''}" title="${wAddr ? 'Wallet connected' : 'No wallet connected'}"></i></span>
-    <div><b>${esc(current.name)}</b><br><span>Lv ${p.level} · Power ${st.power} · ${fmtChog(chogBalance())} $CHOG</span></div><i class="caret" aria-hidden="true"></i>`;
-  $('#me').setAttribute('aria-label', `Your account: hunting as ${current.name}, ${fmtChog(chogBalance())} $CHOG${wAddr ? ', wallet connected' : ''}`);
+    <div><b>${esc(current.name)}</b><br><span>Lv ${p.level} · Power ${st.power} · ${fmtChog(chogBalance())} test $CHOG</span></div><i class="caret" aria-hidden="true"></i>`;
+  $('#me').setAttribute('aria-label', `Your account: hunting as ${current.name}, ${fmtChog(chogBalance())} test $CHOG${wAddr ? ', wallet connected' : ''}`);
   if (!$('#acct').hidden) renderAcct();
 }
 
@@ -397,7 +397,7 @@ function renderBoard() {
       ${m.forge ? `<p class="why">${skulls(m.forge.level)} FUD level ${m.forge.level} · ${esc(m.forge.why)}</p>` : ''}
       <div class="row"><span class="chip" style="--c:${ELEMENTS[m.weak].color}"><i></i>Weak ${ELEMENTS[m.weak].name}</span><span class="reward" style="--c:${P.color}" title="Drops a ${P.name} potion: ${esc(P.effect)}"><i></i>+ ${P.name} potion</span></div>
       ${m.boss ? `<div class="shared"><div class="bar" style="--w:${(bossLeft * 100).toFixed(1)}%"><i></i></div><span>Everyone hits the same boss · weak spot changes every Monday (next: ${ELEMENTS[m.nextWeak]?.name || ''})</span></div>` : ''}
-      <div class="odds">${chogOnly ? '<div><span>Needs a Chog</span></div>' : locked ? `<div><span>Unlocks at level ${m.unlock}</span></div>` : `<div title="How often your hunter wins this on autopilot. Playing it yourself does better."><b style="color:${col}">${pct}%</b> <span>win chance</span></div>`}<span class="bounty">${fmtChog(bounty(m))} $CHOG</span></div>
+      <div class="odds">${chogOnly ? '<div><span>Needs a Chog</span></div>' : locked ? `<div><span>Unlocks at level ${m.unlock}</span></div>` : `<div title="How often your hunter wins this on autopilot. Playing it yourself does better."><b style="color:${col}">${pct}%</b> <span>win chance</span></div>`}<span class="bounty">${fmtChog(bounty(m))} test $CHOG</span></div>
       ${note && !chogOnly ? `<p class="lv">${esc(note)}</p>` : ''}
       ${chogOnly ? `<p class="lv lock-why">The Wannabe only trains. This one needs a real Chog: yours or a hired one.</p>${hire ? `<button type="button" class="hint-hire" data-scroll-hire="${hire.token}">Hire a Chog for this</button>` : ''}` : ''}
       ${!chogOnly && mu.mult <= 1 && FOR_HIRE.some((c) => c.element === m.weak && !hoursLeft(c)) ? `<button type="button" class="hint-hire" data-scroll-hire="${FOR_HIRE.find((c) => c.element === m.weak).token}">No ${ELEMENTS[m.weak].name} Chog? Hire one</button>` : ''}
@@ -416,7 +416,7 @@ function paintHurt() {
   hurtShown = left > 0; bar.hidden = !hurtShown; if (!hurtShown) return;
   const can = chogBalance() >= HEAL_COST && !isPreview(current);
   bar.innerHTML = `<span class="h-ico">✚</span><p><b>${esc(current.name)} is injured</b> · back in ${dur(left)}. Rest, switch hunter, or pay the healer.</p>
-    <button type="button" class="btn" id="heal" ${can ? '' : 'disabled'}>${can ? `Heal now · ${fmtChog(HEAL_COST)} $CHOG` : `Healer needs ${fmtChog(HEAL_COST)} $CHOG`}</button>`;
+    <button type="button" class="btn" id="heal" ${can ? '' : 'disabled'}>${can ? `Heal now · ${fmtChog(HEAL_COST)} test $CHOG` : `Healer needs ${fmtChog(HEAL_COST)} test $CHOG`}</button>`;
 }
 $('#hurt').addEventListener('click', (e) => {
   if (!e.target.closest('#heal')) return;
@@ -446,11 +446,11 @@ function profRent(h) { // what renting has done for this Chog
   if (mine) {
     const { log } = mine, wins = log.done.filter((e) => e.win).length;
     return `<div class="p-rent"><p class="j-h">Rented out · simulated in the demo</p>
-      <div class="p-rent-top"><b>+${fmtChog(log.earned)} $CHOG</b><span>${log.done.length} rentals · ${log.done.length ? Math.round(wins / log.done.length * 100) : 0}% won · hunting the ${esc(log.nowHunt)} now</span></div>
+      <div class="p-rent-top"><b>+${fmtChog(log.earned)} test $CHOG</b><span>${log.done.length} rentals · ${log.done.length ? Math.round(wins / log.done.length * 100) : 0}% won · hunting the ${esc(log.nowHunt)} now</span></div>
       ${log.done.length ? `<ul>${log.done.slice(-3).reverse().map((e) => `<li>${e.win ? 'Beat' : 'Lost to'} the ${esc(e.monster)}<em>${e.win ? `+${fmtChog(e.earned)}` : '0'}</em></li>`).join('')}</ul>` : '<p class="j-note">The first renter is on the way.</p>'}</div>`;
   }
   if (isOwned(h)) return `<div class="p-rent"><p class="j-h">Renting</p><p class="j-note">Not rented out. Other hunters can rent it and you get 30% of every bounty it wins.</p></div>`;
-  if (h.hired) { const s = demoOwnerStats(h.token); return `<div class="p-rent"><p class="j-h">Renting</p><p class="j-note">Its owner earned <b class="gold">${fmtChog(s.earned)} $CHOG</b> from ${s.rentals} rentals without lifting a finger.</p></div>`; }
+  if (h.hired) { const s = demoOwnerStats(h.token); return `<div class="p-rent"><p class="j-h">Renting</p><p class="j-note">Its owner earned <b class="gold">${fmtChog(s.earned)} test $CHOG</b> from ${s.rentals} rentals without lifting a finger.</p></div>`; }
   return '';
 }
 function renderJournal() {
@@ -472,7 +472,7 @@ function renderJournal() {
         <div><b>${log.filter((e) => !e.trip).length}</b><span>Hunts</span></div>
         <div><b>${wins}</b><span>Trophies</span></div>
         <div><b>${log.filter((e) => !e.win && !e.trip && !e.avenged).length}</b><span>Scars</span></div>
-        <div><b>${fmtChog(p.earned || 0)}</b><span>$CHOG</span></div>
+        <div><b>${fmtChog(p.earned || 0)}</b><span>test $CHOG</span></div>
       </div>
       <div><p class="j-h">Trophy wall</p></div>
       <div class="trophies">${Object.keys(KIND_NAME).map((kind) => { const n = p.trophies[kind] || 0;
@@ -488,7 +488,7 @@ function renderJournal() {
           <img src="assets/monsters/${e.kind in KIND_NAME ? e.kind : 'wraith'}.png" alt="">
           <div><b>${e.trip ? `Back from ${esc(e.name)}` : `${e.win ? 'Hunted' : 'Lost to'} the ${esc(e.name)}`}</b>${e.trip ? (e.win ? ' <span class="scar ok">Expedition</span>' : ' <span class="scar">Came back hurt</span>') : e.win ? ` in ${e.turns} turns` : e.avenged ? ' <span class="scar ok">Scar · avenged</span>' : ' <span class="scar">Scar</span>'}
           <q>${esc(e.quote)}</q>
-          <small>${when(e.at)}${e.forged ? ' · forged from a post' : ''}${e.boss ? ' · shared boss' : ''}${e.hired ? ' · hired' : ''}${e.prev ? ' · previous owner' : ''}${e.potion != null ? ` · ${POTIONS[e.potion].name} potion` : ''}${e.chog ? ` · ${fmtChog(e.chog)} $CHOG` : ''}</small></div></li>`).join('')}</ol>${log.length > 4 ? `<button type="button" class="h-own" data-jall>${journalAll ? 'Show the latest 4' : `Show all ${log.length} hunts`}</button>` : ''}`
+          <small>${when(e.at)}${e.forged ? ' · forged from a post' : ''}${e.boss ? ' · shared boss' : ''}${e.hired ? ' · hired' : ''}${e.prev ? ' · previous owner' : ''}${e.potion != null ? ` · ${POTIONS[e.potion].name} potion` : ''}${e.chog ? ` · ${fmtChog(e.chog)} test $CHOG` : ''}</small></div></li>`).join('')}</ol>${log.length > 4 ? `<button type="button" class="h-own" data-jall>${journalAll ? 'Show the latest 4' : `Show all ${log.length} hunts`}</button>` : ''}`
         : `<p class="j-empty">No hunts yet. Take a contract and ${esc(h.name)} writes its first page.</p>`}
     </div>
     <div class="p-acts">
@@ -930,8 +930,8 @@ function renderEarn() { // one plain line for owners under "Got a Chog?": rent i
   const lines = [];
   if (live.length > 2) {
     const earned = live.reduce((s, r) => s + r.log.earned, 0);
-    lines.push(`<p class="rent-line"><span><b>${live.length} Chogs</b> are working for you · <span class="gold">+${fmtChog(earned)} $CHOG</span> so far</span><button type="button" data-unlist-all>Stop all</button><small>simulated in the demo</small></p>`);
-  } else for (const { l, log } of live) lines.push(`<p class="rent-line"><span><b>${esc(l.name)}</b> is working for you · hunting the ${esc(log.nowHunt)} right now · <span class="gold">+${fmtChog(log.earned)} $CHOG</span> so far</span><button type="button" data-unlist="${l.token}">Stop</button><small>simulated in the demo</small></p>`);
+    lines.push(`<p class="rent-line"><span><b>${live.length} Chogs</b> are working for you · <span class="gold">+${fmtChog(earned)} test $CHOG</span> so far</span><button type="button" data-unlist-all>Stop all</button><small>simulated in the demo</small></p>`);
+  } else for (const { l, log } of live) lines.push(`<p class="rent-line"><span><b>${esc(l.name)}</b> is working for you · hunting the ${esc(log.nowHunt)} right now · <span class="gold">+${fmtChog(log.earned)} test $CHOG</span> so far</span><button type="button" data-unlist="${l.token}">Stop</button><small>simulated in the demo</small></p>`);
   if (idle.length > 1) lines.push(`<p class="rent-line"><span>${live.length ? `${idle.length} more` : `<b>${idle.length} Chogs</b>`} sitting idle: let them work for you, you get 30% of every bounty they win.</span><button type="button" data-rent-all>Rent out all ${idle.length}</button></p>`);
   else if (idle.length && !live.length) lines.push(`<p class="rent-line"><span>Let <b>${esc(idle[0].name)}</b> work for you: other hunters rent it, you get 30% of every bounty.</span><button type="button" data-list="${idle[0].token}">Rent it out</button></p>`);
   box.innerHTML = lines.join('');
@@ -1053,9 +1053,9 @@ function showResult(m, res, gain, close) {
     // the money first; the potion sits on the side as loot
     box.innerHTML = `<div class="card win">
       <div class="w-main"><p class="eyebrow">Contract complete · ${res.turns} turns${m.boss ? ' · shared boss hit' : ''}${gain.streak ? ` · streak ${gain.streak} day${gain.streak > 1 ? 's' : ''}` : ''}</p>
-      <h3 class="w-chog">+${fmtChog(gain.chog)} <small>$CHOG</small></h3>
+      <h3 class="w-chog">+${fmtChog(gain.chog)} <small>test $CHOG</small></h3>
       ${m.quote ? `<blockquote class="w-fud">“${esc(m.quote)}”<span class="stamp">DEBUNKED</span></blockquote>` : ''}
-      ${current.hired ? `<p class="w-owner"><b>+${fmtChog(gain.ownerCut)} $CHOG</b> to the owner of ${esc(current.name)}<span>${OWNER_CUT * 100}% for renting it out, without lifting a finger</span></p>` : ''}
+      ${current.hired ? `<p class="w-owner"><b>+${fmtChog(gain.ownerCut)} test $CHOG</b> to the owner of ${esc(current.name)}<span>${OWNER_CUT * 100}% for renting it out, without lifting a finger</span></p>` : ''}
       <div class="gains"><span>+${gain.xp} XP${gain.bonus ? ` · streak +${Math.round(gain.bonus * 100)}%` : ''}</span><span>+1 trophy</span>${gain.avenged ? '<span class="up">Scar avenged!</span>' : ''}${res.loot ? `<span>+${res.loot} fragment</span>` : ''}${gain.levelUp ? `<span class="up">Level ${gain.level}! · +8% health & damage</span>` : ''}</div>
       ${current.ghost ? '<p class="fade-note">Wannabe trophies fade in 24 h. With a Chog they stay for good.</p>' : ''}
       <div class="acts"><button type="button" class="btn" id="done">Collect</button><button type="button" class="btn ghost" id="share">Share on X</button></div></div>
@@ -1068,7 +1068,7 @@ function showResult(m, res, gain, close) {
   } else {
     box.innerHTML = `<div class="card"><div class="noCan">fled</div>
       <div><p class="eyebrow">Injured</p><h3>The ${esc(m.name)} got away</h3>
-      <p>${esc(current.name)} is hurt and can't hunt for ${injuryHours(current)} hours${current.ghost || current.hired ? ' (a Chog you own heals in half the time)' : ' (owners heal twice as fast)'}, unless a healer patches it up for ${fmtChog(HEAL_COST)} $CHOG. The loss goes into its journal as a scar; beat a ${esc(KIND_NAME[m.kind] || 'monster')} later to avenge it.</p>
+      <p>${esc(current.name)} is hurt and can't hunt for ${injuryHours(current)} hours${current.ghost || current.hired ? ' (a Chog you own heals in half the time)' : ' (owners heal twice as fast)'}, unless a healer patches it up for ${fmtChog(HEAL_COST)} test $CHOG. The loss goes into its journal as a scar; beat a ${esc(KIND_NAME[m.kind] || 'monster')} later to avenge it.</p>
       <p class="lv">Next time guard (W) when it says HEAVY, or bring a ${weak} Chog.</p>
       <div class="gains"><span>+${gain.xp} XP</span><span class="hurt">Injured · ${injuryHours(current)} h</span><span class="hurt">+1 scar</span>${gain.levelUp ? `<span class="up">Level ${gain.level}! · +8% health & damage</span>` : ''}</div>
       <button type="button" class="btn" id="done">Back to the board</button></div></div>`;
@@ -1148,7 +1148,7 @@ function setGame(g) {
   if (g === 'run' && !runner) {
     runner = startRunner($('#run-cv'), { onState: (s) => {
       if (!s.over) return;
-      const reward = Math.floor(s.coins / 10); if (reward) { grantChog(reward); renderMe(); }
+      const reward = s.coins; if (reward) { grantChog(reward); renderMe(); }
       sfx(reward ? 'coin' : 'hurt');
       $('#run-msg').innerHTML = `Score <b>${s.score}</b> · best <b>${s.best}</b>${s.coins ? ` · <span class="gold">+${fmtChog(reward)} test $CHOG</span> from ${s.coins} coin${s.coins > 1 ? 's' : ''}` : ''}`;
       $('#run-start').textContent = 'Run again'; $('#run-over').hidden = false;
@@ -1168,7 +1168,7 @@ const CAP_COL = { common: '#836ef9', uncommon: '#5bc8ff', rare: '#e845a4', legen
 function givePrize(p) {
   if (p.kind === 'xp') {
     const h = current, q = h && !h.hired && !isPreview(h) ? prog(h) : null;
-    if (!q) { const n = Math.max(1, Math.round(p.n / 20)); grantChog(n); return `No Chog of yours picked, so it came as <b>+${fmtChog(n)} test $CHOG</b>.`; }
+    if (!q) { const n = Math.round(p.n / 2); grantChog(n); return `No Chog of yours picked, so it came as <b>+${fmtChog(n)} test $CHOG</b>.`; }
     q.xp += p.n; let up = false;
     while (q.xp >= xpToNext(q.level)) { q.xp -= xpToNext(q.level); q.level += 1; up = true; }
     saveProgress(progress); renderAll();
@@ -1178,7 +1178,7 @@ function givePrize(p) {
   if (p.kind === 'potion') { const i = Math.floor(Math.random() * 3); addPotion(i); return `A ${esc(['Health', 'Mana', 'Power'][i])} potion went into your bag.`; }
   // a room item from the shop, free; if you have them all, test $CHOG instead
   const left = ROOM_ITEMS.filter((it) => it.price && !room.bought.includes(it.id));
-  if (!left.length) { grantChog(15); renderMe(); p.label = '+15 test $CHOG'; return 'You own every shop item already, so here is test $CHOG.'; }
+  if (!left.length) { grantChog(150); renderMe(); p.label = '+150 test $CHOG'; return 'You own every shop item already, so here is test $CHOG.'; }
   const it = left[Math.floor(Math.random() * left.length)];
   room.bought.push(it.id); saveRoom(room); p.label = it.name;
   return `A new item for Wannabe's Room. Place it from Decorate.`;
@@ -1259,7 +1259,7 @@ function renderDeco() {
   const sel = ROOM_SLOTS.find((s) => s.id === selSlot);
   const shown = ROOM_ITEMS.filter((it) => it.ready && (!sel || fits(it, sel)));
   const paintRow = (part) => `<div class="r-paint-row"><b>${ROOM_PAINTS[part].name}</b>${ROOM_COLORS.map(([c, hex]) => { const have = c === 'purple' || room.bought.includes(`${part}-${c}`), on = (room.paint[part] || 'purple') === c;
-    return `<button type="button" class="r-sw${have ? '' : ' locked'}" data-paint="${part}:${c}" style="--c:${hex}" aria-pressed="${on}" title="${c[0].toUpperCase() + c.slice(1)}${have ? '' : ` · ${fmtChog(ROOM_PAINTS[part].price)} $CHOG`}" aria-label="${part} ${c}${have ? '' : `, buy for ${ROOM_PAINTS[part].price} test $CHOG`}"></button>`; }).join('')}</div>`;
+    return `<button type="button" class="r-sw${have ? '' : ' locked'}" data-paint="${part}:${c}" style="--c:${hex}" aria-pressed="${on}" title="${c[0].toUpperCase() + c.slice(1)}${have ? '' : ` · ${fmtChog(ROOM_PAINTS[part].price)} test $CHOG`}" aria-label="${part} ${c}${have ? '' : `, buy for ${ROOM_PAINTS[part].price} test $CHOG`}"></button>`; }).join('')}</div>`;
   $('#room').classList.toggle('decorating', decoOpen);
   $('#r-gear').setAttribute('aria-pressed', String(decoOpen));
   if (!decoOpen) { $('#r-deco').innerHTML = ''; return; } // shut: just the two round buttons on the room (camera, gear)
@@ -1267,10 +1267,10 @@ function renderDeco() {
     <p>${sel ? `Pick something for the ${sel.label.toLowerCase()}.` : 'Click an item to put it in the room, or a spot in the room first. Pictures go on the wall. Click an item in the room to take it down.'}</p>
     <div class="r-items">${shown.map((it) => { const have = owns(it, room, stats), on = placedIds.includes(it.id);
       const state = on ? 'placed' : have ? '' : it.price ? 'shop' : 'locked';
-      const note = on ? 'In the room' : have ? (it.wall ? 'Hang it up' : 'Put it up') : it.price ? `Buy · ${fmtChog(it.price)} $CHOG` : it.earn.hint;
+      const note = on ? 'In the room' : have ? (it.wall ? 'Hang it up' : 'Put it up') : it.price ? `Buy · ${fmtChog(it.price)} test $CHOG` : it.earn.hint;
       return `<button type="button" class="r-item ${state}" data-item="${it.id}" ${state === 'locked' ? 'aria-disabled="true"' : ''}>${itemArt(it)}<b>${esc(it.name)}</b><small>${esc(note)}</small></button>`; }).join('')}</div>
     ${paintRow('curtains')}${fastMode() ? `<div class="r-paint-row"><b>Light (test)</b>${[['auto', 'Auto'], ['day', 'Morning'], ['dusk', 'Evening'], ['night', 'Night']].map(([v, l]) => `<button type="button" class="r-light" data-light="${v}" aria-pressed="${lightPick() === v}">${l}</button>`).join('')}</div>` : ''}
-    <div class="acts"><button type="button" class="btn ghost" id="r-faucet" title="Demo only: test tokens, worth nothing">+100 test $CHOG</button></div>`;
+    <div class="acts"><button type="button" class="btn ghost" id="r-faucet" title="Demo only: test tokens, worth nothing">+1,000 test $CHOG</button></div>`;
 }
 // the room's two corner buttons: snap a photo, and the gear that opens decorating
 $('#r-cam').addEventListener('click', () => shareRoom());
@@ -1286,12 +1286,12 @@ $('#r-deco').addEventListener('click', (e) => {
   if (e.target.closest('[data-deco-close]')) { decoOpen = false; selSlot = null; renderDeco(); return; }
   const lb = e.target.closest('[data-light]');
   if (lb) { try { localStorage.setItem(LIGHT_KEY, lb.dataset.light); } catch {} sfx('click'); renderDeco(); return; }
-  if (e.target.closest('#r-faucet')) { grantChog(100); sfx('coin'); renderMe(); renderDeco(); kidSay('Ooh, shiny test tokens! Let\'s go shopping.'); return; }
+  if (e.target.closest('#r-faucet')) { grantChog(1000); sfx('coin'); renderMe(); renderDeco(); kidSay('Ooh, shiny test tokens! Let\'s go shopping.'); return; }
   const p = e.target.closest('[data-paint]');
   if (p) { // rug / curtain colours: purple is the painting, the rest are bought once
     const [part, c] = p.dataset.paint.split(':'), key = `${part}-${c}`;
     if (c !== 'purple' && !room.bought.includes(key)) {
-      if (!spendChog(ROOM_PAINTS[part].price)) { kidSay(`A new ${ROOM_PAINTS[part].name.toLowerCase()} costs ${fmtChog(ROOM_PAINTS[part].price)} $CHOG. Go hunt something!`); return; }
+      if (!spendChog(ROOM_PAINTS[part].price)) { kidSay(`A new ${ROOM_PAINTS[part].name.toLowerCase()} costs ${fmtChog(ROOM_PAINTS[part].price)} test $CHOG. Go hunt something!`); return; }
       room.bought.push(key); sfx('coin'); renderMe();
     }
     room.paint[part] = c; saveRoom(room); sfx('click'); renderDeco(); return;
@@ -1301,7 +1301,7 @@ $('#r-deco').addEventListener('click', (e) => {
   if (Object.values(room.slots).includes(it.id)) { for (const [s, v] of Object.entries(room.slots)) if (v === it.id) delete room.slots[s]; saveRoom(room); renderDeco(); return; }
   if (!owns(it, room, stats)) {
     if (!it.price) return; // earned items unlock by playing
-    if (!spendChog(it.price)) { kidSay(`We need ${fmtChog(it.price)} $CHOG for that. Go hunt something!`); return; }
+    if (!spendChog(it.price)) { kidSay(`We need ${fmtChog(it.price)} test $CHOG for that. Go hunt something!`); return; }
     room.bought.push(it.id); sfx('coin'); renderMe();
   }
   const pickable = ROOM_SLOTS.filter((s) => fits(it, s));
@@ -1359,7 +1359,7 @@ function renderTrips() {
       const r = tripResult(t, el);
       return `<li class="tr-card back">${head(`Back from ${place.name}`, 'back', `<button type="button" class="btn tr-cta" data-unpack="${esc(h.id)}">Unpack</button>`)}${diary}
         <p class="tr-end">${esc(r.ending)}</p>
-        <div class="gains"><span>+${r.xp} XP</span>${r.chog ? `<span class="g-chog">+${fmtChog(r.chog)} $CHOG</span>` : ''}${r.match ? `<span>${ELEMENTS[el].name} bonus</span>` : ''}${r.hurt ? '<span class="hurt">Injured</span>' : ''}</div></li>`;
+        <div class="gains"><span>+${r.xp} XP</span>${r.chog ? `<span class="g-chog">+${fmtChog(r.chog)} test $CHOG</span>` : ''}${r.match ? `<span>${ELEMENTS[el].name} bonus</span>` : ''}${r.hurt ? '<span class="hurt">Injured</span>' : ''}</div></li>`;
     }
     const pct = Math.min(100, (now - t.start) / (t.end - t.start) * 100);
     return `<li class="tr-card away">${head(`${place.name} · ${dur(tripLeft(t))} left`, 'away', `<button type="button" class="btn ghost tr-cta" data-map="${esc(h.id)}">Map</button>`)}
@@ -1385,7 +1385,7 @@ $('#r-trips').addEventListener('click', (e) => {
     // checked again at the last moment: the form may be stale (hurt, away, or no longer yours since it opened)
     if (!h || !travellers().includes(h) || p.trip || injuredLeft(p)) { planning = null; renderTrips(); return; }
     const st = hunterStats(h, p);
-    if (planning.snacks && !spendChog(TRIP_SNACKS)) { kidSay(`Snacks cost ${fmtChog(TRIP_SNACKS)} $CHOG. Go without, or hunt a bit first.`); return; }
+    if (planning.snacks && !spendChog(TRIP_SNACKS)) { kidSay(`Snacks cost ${fmtChog(TRIP_SNACKS)} test $CHOG. Go without, or hunt a bit first.`); return; }
     p.trip = planTrip({ name: h.name, traits: h.traits, cls: st.kit.classInfo.name, element: st.kit.element, ghost: !!h.ghost }, planning.place, planning.trip, planning.snacks);
     planning = null; saveProgress(progress); sfx('coin'); renderAll();
     kidSay(h.ghost ? 'Backyard adventure! Back soon!' : `Bye ${h.name}! Bring me a story!`);

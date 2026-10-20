@@ -8,11 +8,11 @@ export const MAX_TOKENS = 5;
 // [weight, prize]; the odds are shown on the machine
 export const PRIZES = [
   [35, { kind: 'xp', n: 40, label: '+40 XP', tier: 'common' }],
-  [25, { kind: 'chog', n: 3, label: '+3 test $CHOG', tier: 'common' }],
+  [25, { kind: 'chog', n: 30, label: '+30 test $CHOG', tier: 'common' }],
   [20, { kind: 'potion', label: 'A potion', tier: 'uncommon' }],
   [12, { kind: 'xp', n: 120, label: '+120 XP', tier: 'uncommon' }],
   [6, { kind: 'item', label: 'A room item', tier: 'rare' }],
-  [2, { kind: 'chog', n: 50, label: 'Golden capsule: +50 test $CHOG', tier: 'legend' }],
+  [2, { kind: 'chog', n: 500, label: 'Golden capsule: +500 test $CHOG', tier: 'legend' }],
 ];
 const TOTAL = PRIZES.reduce((s, [w]) => s + w, 0);
 export const odds = () => PRIZES.map(([w, p]) => ({ ...p, pct: Math.round(w / TOTAL * 100) }));

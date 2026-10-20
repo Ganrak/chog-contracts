@@ -14,11 +14,11 @@ export const PLACES = [
   { id: 'crypt', name: 'Deadchain Crypt', kind: 'ghoul', weak: 'fire', blurb: 'Where dead chains are buried.' },
 ];
 export const TRIPS = [
-  { id: 'short', name: 'Short', hours: 1, risk: 0.08, xp: 40, chog: 2 },
-  { id: 'mid', name: 'Medium', hours: 8, risk: 0.2, xp: 120, chog: 6 },
-  { id: 'long', name: 'Long', hours: 24, risk: 0.35, xp: 280, chog: 15 },
+  { id: 'short', name: 'Short', hours: 1, risk: 0.08, xp: 40, chog: 20 },
+  { id: 'mid', name: 'Medium', hours: 8, risk: 0.2, xp: 120, chog: 60 },
+  { id: 'long', name: 'Long', hours: 24, risk: 0.35, xp: 280, chog: 150 },
 ];
-export const SNACKS = 3; // test $CHOG
+export const SNACKS = 30; // test $CHOG
 const FAST_KEY = 'chog-contracts-fast-trips';
 export const fastMode = () => { try { return localStorage.getItem(FAST_KEY) === '1'; } catch { return false; } };
 export const setFastMode = (on) => { try { localStorage.setItem(FAST_KEY, on ? '1' : '0'); } catch {} };

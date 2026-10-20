@@ -6,8 +6,8 @@
 export const OWNER_SHARE = 0.3;
 const EVERY_H = 4; // a simulated rental every 4 hours
 const HUNTS = [
-  { name: 'Gas-Bloat Troll', bounty: 44 }, { name: 'Rugshade Thief', bounty: 52 }, { name: 'Lagstone Golem', bounty: 54 },
-  { name: 'Deadchain Ghoul', bounty: 33 }, { name: 'Panic Harpy', bounty: 41 }, { name: 'Murmur Wraith', bounty: 38 },
+  { name: 'Gas-Bloat Troll', bounty: 440 }, { name: 'Rugshade Thief', bounty: 520 }, { name: 'Lagstone Golem', bounty: 540 },
+  { name: 'Deadchain Ghoul', bounty: 330 }, { name: 'Panic Harpy', bounty: 410 }, { name: 'Murmur Wraith', bounty: 380 },
 ];
 function rnd(seed) { let t = (seed + 0x6D2B79F5) >>> 0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
 const cut = (b) => Math.round(b * OWNER_SHARE);
@@ -32,7 +32,7 @@ export function dailyEstimate(power) {
 
 /** The demo market's Chogs have a made-up but steady history, so their cards can show what owners earned. */
 export function demoOwnerStats(token) {
-  const rentals = 6 + (token * 13) % 11, avg = cut(44) * 0.75;
+  const rentals = 6 + (token * 13) % 11, avg = cut(440) * 0.75;
   return { rentals, earned: Math.round(rentals * avg) };
 }
 
