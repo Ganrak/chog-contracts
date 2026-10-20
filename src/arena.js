@@ -411,7 +411,7 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
         else if (!e.tick && (lastUse || e.counter)) await orb(meA, foeA, c, 170, true); // follow-up hits: volt chain, combos, a Grit counter
         sfx(e.tag === 'CRIT' || e.tag === 'EXECUTE' ? 'crit' : e.tag === 'WEAK SPOT' ? 'weak' : 'hit');
         if (e.tag === 'WEAK SPOT' && !saidWeak) { saidWeak = true; meSay('weak', 1800); }
-        if (e.tag === 'WEAK SPOT') coachTip('weak', 'Weak spot! Your Chog\'s element hits this monster for +70%. Bring the right element and fights get easy.');
+        if (e.tag === 'WEAK SPOT') coachTip('weak', 'Weak spot! Your Chog\'s element hits this monster for +50%. Bring the right element and fights get easy.');
         hud(); shake(foeA);
         if (e.tick) {
           if (e.tag === 'BURN') burnFx(foeA, true); else if (e.tag === 'POISON') venomTick(foeA);

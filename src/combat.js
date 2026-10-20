@@ -16,7 +16,7 @@ export const MOVESETS = {
 };
 // tuning: monster health and hit strength relative to its power
 // tuned by simulation: first monster easy, element choice matters, boss needs levels
-export const TUNE = { hp: 2.85, dmg: 1.4, boss: 1.25, bossWeak: 1.35, rageTurn: 10, rageStep: 0.2 };
+export const TUNE = { hp: 2.85, dmg: 1.4, weak: 1.5, boss: 1.25, bossWeak: 1.35, rageTurn: 10, rageStep: 0.2 };
 const KIND_TEXT = { hit: 'attack', heavy: 'heavy attack', poison: 'poison', drain: 'steals energy', armor: 'raises armor', weaken: 'weakens you' };
 
 /* ---------- what each move does, by the names kit.js gives them ---------- */
@@ -95,7 +95,7 @@ function buff(f, ev, amount, turns) { if (!(f.me.dmg > amount && f.me.dmgTurns >
 function slow(f, ev, turns) { f.foe.slow = Math.max(f.foe.slow, turns); ev.push({ t: 'status', to: 'foe', s: 'slow', text: 'Slowed' }); }
 function stun(f, ev, turns) { f.foe.stun = Math.max(f.foe.stun, turns); ev.push({ t: 'status', to: 'foe', s: 'stun', text: turns > 1 ? `Stunned ${turns} turns` : 'Stunned' }); }
 // the right element should decide a normal fight; against the boss it helps but levels and potions still matter
-const elMult = (f, el) => (el === f.foe.weak ? (f.foe.boss ? TUNE.bossWeak : 1.7) : el === f.foe.immune ? 0.6 : 1);
+const elMult = (f, el) => (el === f.foe.weak ? (f.foe.boss ? TUNE.bossWeak : TUNE.weak) : el === f.foe.immune ? 0.6 : 1);
 
 function strike(f, ev, rnd, scale, el, { pierce = false, crit = 0, beam = false, counter = false } = {}) {
   const m = elMult(f, el);
