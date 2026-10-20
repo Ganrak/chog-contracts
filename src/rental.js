@@ -6,11 +6,11 @@
 export const OWNER_SHARE = 0.3;
 const EVERY_H = 4; // a simulated rental every 4 hours
 const HUNTS = [
-  { name: 'Gas-Bloat Troll', bounty: 4400 }, { name: 'Rugshade Thief', bounty: 5200 }, { name: 'Lagstone Golem', bounty: 5400 },
-  { name: 'Deadchain Ghoul', bounty: 3300 }, { name: 'Panic Harpy', bounty: 4100 }, { name: 'Murmur Wraith', bounty: 3800 },
+  { name: 'Gas-Bloat Troll', bounty: 44 }, { name: 'Rugshade Thief', bounty: 52 }, { name: 'Lagstone Golem', bounty: 54 },
+  { name: 'Deadchain Ghoul', bounty: 33 }, { name: 'Panic Harpy', bounty: 41 }, { name: 'Murmur Wraith', bounty: 38 },
 ];
 function rnd(seed) { let t = (seed + 0x6D2B79F5) >>> 0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
-const cut = (b) => Math.round(b * OWNER_SHARE / 50) * 50;
+const cut = (b) => Math.round(b * OWNER_SHARE);
 
 /** Everything that happened to a listing so far: finished rentals and the one in progress. */
 export function rentalLog(token, since, now = Date.now(), fast = false) {
@@ -27,13 +27,13 @@ export function rentalLog(token, since, now = Date.now(), fast = false) {
 /** A rough daily estimate for listing a Chog of this power (shown before listing). */
 export function dailyEstimate(power) {
   const avg = HUNTS.reduce((s, h) => s + h.bounty, 0) / HUNTS.length, scale = Math.max(0.7, Math.min(1.3, power / 80));
-  return Math.round(avg * scale * OWNER_SHARE * 0.75 * (24 / EVERY_H) / 50) * 50;
+  return Math.round(avg * scale * OWNER_SHARE * 0.75 * (24 / EVERY_H));
 }
 
 /** The demo market's Chogs have a made-up but steady history, so their cards can show what owners earned. */
 export function demoOwnerStats(token) {
-  const rentals = 6 + (token * 13) % 11, avg = cut(4400) * 0.75;
-  return { rentals, earned: Math.round(rentals * avg / 50) * 50 };
+  const rentals = 6 + (token * 13) % 11, avg = cut(44) * 0.75;
+  return { rentals, earned: Math.round(rentals * avg) };
 }
 
 /* which simulated rentals have already been paid into the test balance, per token */
