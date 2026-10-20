@@ -18,6 +18,13 @@ async function rpc(method, params) {
   return j.result;
 }
 
+// a successful call (no revert anywhere above it) from the wallet to the same wallet carrying exactly `wei`
+function selfCall(node, wallet, wei) {
+  if (!node || node.error) return false; // a reverted call undoes everything inside it
+  if ((node.type === 'CALL' || node.type === undefined) && node.from?.toLowerCase() === wallet && node.to?.toLowerCase() === wallet && BigInt(node.value || '0x0') === wei) return true;
+  return (node.calls || []).some((c) => selfCall(c, wallet, wei));
+}
+
 export default async (req) => {
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
   const b = await req.json().catch(() => null);
@@ -48,9 +55,19 @@ export default async (req) => {
   } catch { return json({ error: 'Monad could not be read right now. Try again.' }, 503); }
 
   if (rc.status !== '0x1') return json({ error: 'That transaction failed on Monad.' }, 400);
-  if (t.from?.toLowerCase() !== wallet) return json({ error: 'That transaction was not sent from this address.' }, 403);
-  if (t.to?.toLowerCase() !== wallet) return json({ error: 'Send it to yourself: the "to" address has to be your own address.' }, 400);
-  if (BigInt(t.value) !== BigInt(ch.wei)) return json({ error: `The amount has to be exactly ${showMon(BigInt(ch.wei))} MON.` }, 400);
+  const want = BigInt(ch.wei);
+  const direct = t.from?.toLowerCase() === wallet && t.to?.toLowerCase() === wallet && BigInt(t.value) === want;
+  if (!direct) {
+    // smart accounts (MetaMask's, and others) send through a relayer: the outer transaction comes from someone else,
+    // and the transfer is a call made by the account itself inside it. Look for that call in the trace.
+    let found = false;
+    try { found = selfCall(await rpc('debug_traceTransaction', [tx, { tracer: 'callTracer' }]), wallet, want); }
+    catch { return json({ error: 'Monad could not be read right now. Try again.' }, 503); }
+    if (!found) {
+      if (t.from?.toLowerCase() === wallet && t.to?.toLowerCase() === wallet) return json({ error: `The amount has to be exactly ${showMon(want)} MON.` }, 400);
+      return json({ error: `No transfer of exactly ${showMon(want)} MON from this address to itself is in that transaction.` }, 400);
+    }
+  }
   if (Number(BigInt(block.timestamp)) * 1000 < ch.iat - 60_000) return json({ error: 'That transaction is older than this code. Send a new one.' }, 400);
 
   const store = getStore({ name: 'self-verify', consistency: 'strong' });
