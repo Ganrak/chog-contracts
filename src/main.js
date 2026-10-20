@@ -207,7 +207,8 @@ let current = HUNTERS[0];
 syncHires();
 try { const saved = localStorage.getItem('chog-contracts-demo-hunter'); if (saved) current = HUNTERS.find((h) => h.id === saved) || current; } catch {}
 // the board: the training Ghoul, today's two contracts, (a forged one), and the weekly boss last
-const TRAINING = { ...MONSTERS[0], training: true }, BOSS = MONSTERS.find((m) => m.boss);
+// the first fight is weaker and no element shrugs it off, so the Wannabe of any day wins it
+const TRAINING = { ...MONSTERS[0], power: 55, immune: null, training: true }, BOSS = MONSTERS.find((m) => m.boss);
 let today = dayKey();
 const contracts = [TRAINING, ...dailyContracts(today), BOSS];
 // a new day while the page is open: swap in the new pair
