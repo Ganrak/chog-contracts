@@ -123,6 +123,11 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
     b.style.left = `${(side === 'right' ? r.right - 10 : side === 'left' ? r.left + 10 : r.left + r.width * 0.5) - a.left}px`;
     b.style.top = `${r.top - a.top + (side === 'up' ? -4 : r.height * 0.3)}px`;
     fx.appendChild(b); bubbles[who] = b;
+    // keep the bubble inside the arena: a speaker near an edge (the sidekick on the far left) would push it off-screen
+    const br = b.getBoundingClientRect(), edge = 8;
+    const dx = br.left < a.left + edge ? a.left + edge - br.left : br.right > a.right - edge ? a.right - edge - br.right : 0;
+    if (dx) { b.style.left = `${parseFloat(b.style.left) + dx}px`; b.style.setProperty('--tail', `${Math.max(0, Math.min(110, dx))}px`); }
+    if (br.top < a.top + edge) b.style.top = `${parseFloat(b.style.top) + (a.top + edge - br.top)}px`;
     setTimeout(() => { b.classList.add('out'); setTimeout(() => b.remove(), 320); }, ms);
   }
   const ctx = { monster: monster.name };
