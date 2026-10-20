@@ -381,7 +381,7 @@ a.mark, .foot a.mark{color:var(--fg); text-decoration:none; border:0; width:max-
 @media (prefers-reduced-motion:reduce){ .standee.living{animation:none} .flare{animation:none; opacity:0} }
 @keyframes auraPulse{50%{box-shadow:0 0 0 3px rgba(0,0,0,.4), 0 20px 50px -10px var(--hc), 0 0 95px 14px var(--aura, transparent)}}
 /* the Apprentice as sidekick: it watches from the corner while a real Chog hunts */
-.sidekick{position:absolute; left:1%; bottom:9%; width:min(12vw,130px); z-index:2; pointer-events:none; filter:drop-shadow(0 10px 12px rgba(0,0,0,.55)); animation:skIdle 2.6s ease-in-out infinite}
+.sidekick{position:absolute; left:calc(9% + min(34vw, 340px) * .95); bottom:11%; width:min(12vw,130px); z-index:2; pointer-events:none; filter:drop-shadow(0 10px 12px rgba(0,0,0,.55)); animation:skIdle 2.6s ease-in-out infinite}
 .sidekick.hop{animation:skHop .45s ease-out}
 @keyframes skIdle{50%{transform:translateY(-4px) rotate(-1.5deg)}}
 @keyframes skHop{40%{transform:translateY(-22px) rotate(4deg)} 100%{transform:none}}
@@ -392,7 +392,7 @@ a.mark, .foot a.mark{color:var(--fg); text-decoration:none; border:0; width:max-
 .say.up{transform:translate(-70%,-100%); max-width:150px; font-size:12.5px; padding:7px 10px} .say.up::after{left:auto; right:18px}
 .say.out{opacity:0; transition:opacity .3s}
 @keyframes sayIn{from{opacity:0; scale:.6}}
-@media (max-width:760px){ .say{max-width:44vw; font-size:12px; padding:7px 9px} .sidekick{width:17vw; bottom:3%} }
+@media (max-width:760px){ .say{max-width:44vw; font-size:12px; padding:7px 9px} .sidekick{width:17vw; bottom:3%; left:calc(2% + 46vw * .74)} }
 @media (prefers-reduced-motion:reduce){ .sidekick,.sidekick.hop,.say{animation:none} }
 /* laser ultimates: a flare on each eye while the beams fire */
 .flare{position:absolute; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; pointer-events:none; background:radial-gradient(circle, #fff 0 18%, var(--oc) 40%, transparent 70%); box-shadow:0 0 30px 10px var(--oc); animation:flare .7s ease-out forwards}

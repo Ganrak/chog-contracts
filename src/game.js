@@ -184,7 +184,7 @@ export function payBounty(m, hired) {
 
 /* ---------- losing hurts: the hunter is injured (no hunting) for 3 h, or 1.5 h for a Chog you own; a healer
    patches it up now for test $CHOG. Never touches the NFT or the wallet; only this game's progress. ---------- */
-export const INJURY_H = { owner: 1.5, other: 3 }, HEAL_COST = 1000;
+export const INJURY_H = { owner: 1.5, other: 3 }, HEAL_COST = 10000;
 export const injuredLeft = (p) => Math.max(0, (p.hurtUntil || 0) - Date.now());
 export function injure(p, hours) { p.hurtUntil = Date.now() + hours * 3600000; }
 export function healNow(p) {

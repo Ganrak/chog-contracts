@@ -135,13 +135,16 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
   /* ---------- HUD ---------- */
   function chips(list) { return list.map(([s, extra]) => { const [label, c] = STATUS[s]; return `<span style="--sc:${c}">${ico(STATUS_ICON[s], 'sm')}${label}${extra ? ` ${extra}` : ''}</span>`; }).join(''); }
   const moveIcon = (m) => (m.key === 'Q' ? f.element : /laser$/i.test(m.name) ? f.laserEl : /signature/i.test(m.name) ? 'ult' : MOVE_ICON[m.name] || (m.ult ? 'ult' : 'buff'));
+  // health as the playback has reached it (null when nothing is playing): a turn is worked out in full before it is
+  // shown, so reading f.me.hp mid-playback would drop the bar before the monster's blow lands
+  let shown = null;
   function hud() {
-    const me = f.me, foe = f.foe;
-    $('#me-bar').style.setProperty('--w', `${(me.hp / me.maxHp * 100).toFixed(1)}%`);
+    const me = f.me, foe = f.foe, meHp = shown ? shown.me : me.hp, foeHp = shown ? shown.foe : foe.hp;
+    $('#me-bar').style.setProperty('--w', `${(meHp / me.maxHp * 100).toFixed(1)}%`);
     $('#me-bar').style.setProperty('--s', `${Math.min(100, me.shield / me.maxHp * 100).toFixed(1)}%`);
-    $('#me-nums').textContent = `${me.hp}/${me.maxHp}${me.shield ? ` +${me.shield}` : ''}`;
-    $('#foe-bar').style.setProperty('--w', `${(foe.hp / foe.maxHp * 100).toFixed(1)}%`);
-    $('#foe-nums').textContent = `${foe.hp}/${foe.maxHp}`;
+    $('#me-nums').textContent = `${meHp}/${me.maxHp}${me.shield ? ` +${me.shield}` : ''}`;
+    $('#foe-bar').style.setProperty('--w', `${(foeHp / foe.maxHp * 100).toFixed(1)}%`);
+    $('#foe-nums').textContent = `${foeHp}/${foe.maxHp}`;
     $('#pips').innerHTML = [0, 1, 2].map((i) => `<span class="${i < me.energy ? 'on' : ''}"></span>`).join('') + `<small>${me.energy >= 3 ? 'ULT READY' : 'ENERGY'}</small>`;
     $('#me-status').innerHTML = chips([me.guard > 0 && ['guard'], me.evade > 0 && ['evade'], me.dmg > 0 && ['buff', `+${Math.round(me.dmg * 100)}%`], me.weak > 0 && ['weak'], me.poison > 0 && ['poison', `×${me.poison}`], me.frog > 0 && me.frog < 50 && ['frog', me.frog], rage(f) > 1 && ['rage', `+${Math.round((rage(f) - 1) * 100)}%`]].filter(Boolean));
     $('#foe-status').innerHTML = chips([foe.phase2 && ['enraged'], foe.burn > 0 && ['burn', foe.burn], foe.poison > 0 && ['poison', `×${foe.poison}`], foe.slow > 0 && ['slow'], foe.stun > 0 && ['stun'], foe.exposed > 0 && ['exposed'], foe.mog > 0 && ['mog'], foe.confused > 0 && ['confused'], foe.armor > 0 && ['armor']].filter(Boolean));
@@ -386,6 +389,12 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
     const FOE_HUE = { poison: '115deg', drain: '255deg', weaken: '-30deg' }; // claw marks recoloured from red
     for (const e of events) {
       if (closed) return;
+      if (shown) { // move the shown health along with each event, before it is drawn
+        if (e.t === 'dmg' && e.to === 'me') shown.me = Math.max(0, shown.me - e.n);
+        else if (e.t === 'dmg' && e.to === 'foe') shown.foe = Math.max(0, shown.foe - e.n);
+        else if (e.t === 'heal') shown.me = Math.min(f.me.maxHp, shown.me + (e.n || 0));
+        else if (e.t === 'revive' || e.t === 'end') shown = { me: f.me.hp, foe: f.foe.hp };
+      }
       if (e.t === 'use') {
         lastUse = e; shotDone = false;
         const c = ELEMENTS[e.el]?.color || (e.el === 'guard' ? '#8FD3FF' : hc);
@@ -416,7 +425,7 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
       } else if (e.t === 'heal') {
         hud();
         if (!e.n) { pop(meA, 'Full health', null, '#7CE2A0', true); await wait(300); continue; }
-        if (!e.tick) sfx('heal'); life?.heal(f.me.hp / f.me.maxHp);
+        if (!e.tick) sfx('heal'); life?.heal((shown ? shown.me : f.me.hp) / f.me.maxHp);
         burst(meA, { n: e.tick ? 4 : 10, color: '#7CE2A0', cls: 'plus', up: 70, grav: -50, spread: 70, size: [9, 16] });
         pop(meA, `+${e.n}`, e.tick ? null : 'HEAL', '#7CE2A0', e.tick); await wait(e.tick ? 320 : 450);
       }
@@ -468,7 +477,7 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
       else if (e.t === 'block') { fxEl('impact', meA, '#8FD3FF', 650); pop(meA, `Blocked ${e.n}`, null, '#8FD3FF', true); await wait(250); }
       else if (e.t === 'dmg' && e.to === 'me') {
         if (!e.tick) { sfx('hurt'); swingT.forEach(clearTimeout); mePose(2); setTimeout(() => { if (!f.over) mePose(0); }, 520); }
-        hud(); life?.hurt(f.me.hp / f.me.maxHp); shake(meA);
+        hud(); life?.hurt((shown ? shown.me : f.me.hp) / f.me.maxHp); shake(meA);
         if (!e.tick) { skPose(2); setTimeout(() => { if (!f.over) skPose(0); }, 600); slash(meA, FOE_HUE[lastFoe] || '0deg', e.heavy); burst(meA, { n: e.heavy ? 14 : 8, color: '#ff6a6a', spread: e.heavy ? 130 : 90, grav: 40, size: [5, 10] }); }
         else if (e.tag === 'POISON') venomTick(meA);
         if (!saidLow && f.me.hp > 0 && f.me.hp / f.me.maxHp < 0.35) { saidLow = true; meSay('low', 2000); setTimeout(() => skSay('low'), 900); }
@@ -511,8 +520,9 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
     if (busy || f.over || closed) return;
     clearCoach();
     busy = true; hud();
+    shown = { me: f.me.hp, foe: f.foe.hp };
     const events = act(f, key, rand); if (events.length) pressed.push(key);
-    await play(events);
+    await play(events); shown = null;
     if (closed) return;
     busy = false; hud(); coachMoment();
     if (f.over) return finish();
@@ -552,7 +562,8 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
     burst($('#me-art'), { n: 16, color: POTIONS[i].color, cls: 'bubbleP', up: 90, grav: -60, spread: 80, size: [7, 14] });
     fxEl('impact', $('#me-art'), POTIONS[i].color, 650);
     await wait(260);
-    pressed.push(`P${i}`); await play(quaff(f, i)); if (closed) return;
+    shown = { me: f.me.hp, foe: f.foe.hp };
+    pressed.push(`P${i}`); await play(quaff(f, i)); shown = null; if (closed) return;
     busy = false; hud(); coachMoment();
     if (auto && !f.over) turn(autoMove(f)); // Auto was switched on while drinking: carry on with it
   };

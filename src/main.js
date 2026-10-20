@@ -380,7 +380,7 @@ function renderBoard() {
     const auto = autoPickOn() && better ? better : null;
     const H = auto ? auto.h : current, S = auto ? auto.s : st, L = prog(H).level, hHurt = auto ? 0 : hurt, hAway = auto ? false : away;
     // odds = how often the autopilot wins this fight; smart play beats it
-    const mu = matchup(S, m), pct = Math.round(simulate(S, m, { level: L, ghost: !!H.ghost }, 120) * 100);
+    const mu = matchup(S, m), pct = Math.min(99, Math.round(simulate(S, m, { level: L, ghost: !!H.ghost }, 120) * 100)); // a fight is never a sure thing: 99% at most
     // the Apprentice is the free trial: training + today's easy contract. The rest needs a Chog (yours or hired)
     const chogOnly = !!H.ghost && !(m.training || (m.daily && m.id.endsWith('-0'))), locked = chogOnly || (m.boss && L < m.unlock);
     const preview = isPreview(H); // someone else's Chog, pasted: look, don't play
