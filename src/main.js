@@ -23,6 +23,7 @@ import { drawShareCard, shareHunt, saveCard, shareImage } from './share.js';
 import { musicOn, setMusic } from './music.js';
 import { startMotion as startTouches } from './motion.js';
 import { POOL, poolPrize } from './pool.js';
+import { loadCapsule, claimDaily, earnToken, spin as capsuleSpin, odds as capsuleOdds, nextFreeIn, MAX_TOKENS } from './capsule.js';
 import { listWallets, connect, ownershipMessage, signOwnership, listingMessage, signText, disconnect, load as loadWallet, short } from './wallet.js';
 
 const $ = (s) => document.querySelector(s);
@@ -1037,6 +1038,7 @@ async function hunt(m) {
       gain.avenged = res.win && (p.log || []).some((e) => !e.win && !e.trip && e.kind === m.kind && !e.avenged);
       remember(p, m, res, { hired: !!current.hired, chog: res.win ? bounty(m) : 0 });
       if (!res.win) injure(p, injuryHours(current)); // losing hurts: hours off, or pay a healer
+      if ((res.win && m.daily) || m.boss) { if (earnToken()) setTimeout(() => toast('+1 capsule token for the Chog Capsule in the arcade.'), 1800); }
       if (m.boss) { bossLeft = Math.max(0.05, bossLeft - (res.win ? 0.06 : 0.02)); addBossDamage(res.dmg || 0, res.win); if (ranked) submitRanked(ranked, res, lvl); }
       saveProgress(progress);
       setTimeout(() => showResult(m, res, gain, close), 1500); // time to see the win/lose line first
@@ -1114,7 +1116,7 @@ let studio = null, b3d = null; // studio: { h, size, m, pic }; b3d: the 3D view
 /* ---------- the arcade (src/arcade.js): a painted room of cabinets. Pick one and the camera dives into its screen;
    the game takes the room's place, with a way back out ---------- */
 let arcade = null, runner = null, arcadeGame = 'room'; // 'room', or the game you're in
-const GAME_NAME = { studio: 'Brick Studio', drop: 'Chog Drop', run: 'Wannabe Run' };
+const GAME_NAME = { studio: 'Brick Studio', drop: 'Chog Drop', run: 'Wannabe Run', capsule: 'Chog Capsule' };
 let diving = false;
 function openArcade() {
   if (!arcade) arcade = startArcade($('#arcade'), { onPick: enterGame });
@@ -1141,6 +1143,7 @@ function setGame(g) {
   const inRoom = g === 'room';
   $('#arcade').hidden = !inRoom; $('#ar-bar').hidden = inRoom; $('#ar-now').textContent = GAME_NAME[g] || '';
   document.querySelectorAll('#studio [data-gp]').forEach((p) => { p.hidden = p.dataset.gp !== g; });
+  if (g === 'capsule') renderCapsule();
   arcade?.setActive(g); arcade?.pause(!inRoom); drop?.pause(g !== 'drop'); runner?.pause(g !== 'run');
   if (g === 'run' && !runner) {
     runner = startRunner($('#run-cv'), { onState: (s) => {
@@ -1152,6 +1155,49 @@ function setGame(g) {
     } });
   }
 }
+/* ---------- Chog Capsule (src/capsule.js): earned tokens in, small prizes out ---------- */
+function renderCapsule() {
+  if (claimDaily()) toast('Your free capsule token for today is in the machine.');
+  const c = loadCapsule();
+  $('#cap-count').textContent = String(c.tokens);
+  $('#cap-next').textContent = c.tokens >= MAX_TOKENS ? 'full' : `next free one in ${nextFreeIn()}`;
+  $('#cap-spin').disabled = c.tokens < 1;
+  $('#cap-odds').innerHTML = capsuleOdds().map((o) => `<li>${esc(o.label)}: ${o.pct}%</li>`).join('');
+}
+const CAP_COL = { common: '#836ef9', uncommon: '#5bc8ff', rare: '#e845a4', legend: '#ffd66b' };
+function givePrize(p) {
+  if (p.kind === 'xp') {
+    const h = current, q = h && !h.hired && !isPreview(h) ? prog(h) : null;
+    if (!q) { grantChog(p.n * 5); return `No Chog of yours picked, so it came as <b>+${fmtChog(p.n * 5)} test $CHOG</b>.`; }
+    q.xp += p.n; let up = false;
+    while (q.xp >= xpToNext(q.level)) { q.xp -= xpToNext(q.level); q.level += 1; up = true; }
+    saveProgress(progress); renderAll();
+    return `<b>${esc(h.name)}</b> got ${p.n} XP${up ? ` and reached <b>level ${q.level}</b>!` : '.'}`;
+  }
+  if (p.kind === 'chog') { grantChog(p.n); renderMe(); return 'Added to your test $CHOG.'; }
+  if (p.kind === 'potion') { const i = Math.floor(Math.random() * 3); addPotion(i); return `A ${esc(['Health', 'Mana', 'Power'][i])} potion went into your bag.`; }
+  // a room item from the shop, free; if you have them all, test $CHOG instead
+  const left = ROOM_ITEMS.filter((it) => it.price && !room.bought.includes(it.id));
+  if (!left.length) { grantChog(1500); renderMe(); p.label = '+1,500 test $CHOG'; return 'You own every shop item already, so here is test $CHOG.'; }
+  const it = left[Math.floor(Math.random() * left.length)];
+  room.bought.push(it.id); saveRoom(room); p.label = it.name;
+  return `A new item for Wannabe's Room. Place it from Decorate.`;
+}
+$('#cap-spin').addEventListener('click', () => {
+  const m = document.querySelector('.cap-machine');
+  if (m.classList.contains('spinning')) return;
+  const p = capsuleSpin(); if (!p) { renderCapsule(); return; }
+  sfx('click'); $('#cap-result').hidden = true; $('#cap-spin').disabled = true;
+  m.classList.remove('dropped'); m.classList.add('spinning');
+  $('#cap-ball').style.setProperty('--c', CAP_COL[p.tier]);
+  setTimeout(() => {
+    m.classList.remove('spinning'); m.classList.add('dropped');
+    const line = givePrize(p);
+    const r = $('#cap-result'); r.className = `cap-result t-${p.tier}`;
+    r.innerHTML = `<b>${esc(p.label)}</b>${line}`; r.hidden = false;
+    sfx(p.tier === 'legend' || p.tier === 'rare' ? 'win' : 'coin'); renderCapsule();
+  }, 950);
+});
 $('#run-start').addEventListener('click', () => { $('#run-over').hidden = true; runner?.start(); sfx('click'); });
 // your own Chogs (loaded or verified); without one, a single sample Chog to try it with
 const studioHunters = () => { const own = HUNTERS.filter(isOwned); return own.length ? own : SAMPLES.slice(0, 1); };

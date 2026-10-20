@@ -5,7 +5,7 @@
 const IW = 1672, IH = 941; // the painting's own pixels
 // [game, cabinet box, screen box, marquee centre] in painting pixels
 const MACHINES = [
-  { game: 'soon', name: 'Coming soon', cab: [175, 250, 237, 410], screen: [220, 325, 150, 116], label: [300, 282] },
+  { game: 'capsule', name: 'Chog Capsule', cab: [175, 250, 237, 410], screen: [220, 325, 150, 116], label: [300, 282] },
   { game: 'drop', name: 'Chog Drop', cab: [445, 250, 227, 410], screen: [487, 325, 151, 116], label: [560, 282] },
   { game: 'studio', name: 'Brick Studio', cab: [705, 222, 262, 445], screen: [750, 310, 176, 133], label: [836, 262] },
   { game: 'run', name: 'Wannabe Run', cab: [1005, 250, 222, 410], screen: [1042, 325, 151, 116], label: [1120, 282] },
@@ -84,7 +84,18 @@ export function startArcade(stage, { onPick } = {}) {
     c.imageSmoothingEnabled = false; c.drawImage(off, 0, 0, 160, 120); off.width = off.height = 22;
     if (Math.floor(t * 1.5) % 2 === 0) { c.fillStyle = 'rgba(232,69,164,.9)'; c.font = '700 16px monospace'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('SOON', 80, 60); }
   }
-  const DRAW = { studio: drawStudio, drop: drawDrop, run: drawRun, soon: drawSoon };
+  // Chog Capsule: coloured capsules bobbing in a glass dome
+  const CAPS = DROP_COLS.map((col, i) => ({ col, x: 30 + (i % 3) * 45, y: 40 + Math.floor(i / 3) * 34, p: i }));
+  function drawCapsule({ c }) {
+    c.fillStyle = '#160b1c'; c.fillRect(0, 0, 160, 120);
+    c.fillStyle = 'rgba(169,155,252,.15)'; c.beginPath(); c.arc(80, 60, 52, 0, Math.PI * 2); c.fill();
+    for (const k of CAPS) {
+      const y = k.y + Math.sin(t * 3 + k.p) * 4;
+      c.fillStyle = k.col; c.beginPath(); c.arc(k.x + 8, y, 12, Math.PI, 0); c.fill();
+      c.fillStyle = '#f4f1fe'; c.beginPath(); c.arc(k.x + 8, y, 12, 0, Math.PI); c.fill();
+    }
+  }
+  const DRAW = { studio: drawStudio, drop: drawDrop, run: drawRun, soon: drawSoon, capsule: drawCapsule };
   function frame() {
     t += 1 / 24;
     for (const s of screens) {
