@@ -164,7 +164,18 @@ export function settle(p, m, win, mult) {
    Demo amounts are test numbers kept in this browser; in the game they'd come from a bounty pool. */
 export const OWNER_SHARE = 0.3;
 // test $CHOG: training 500, a contract 3,000-6,500 by power (rounded to 500), the weekly boss 25,000. Real $CHOG only comes from the weekly pool.
-export const bounty = (m) => (m.training ? 500 : m.boss ? 25000 : Math.round(m.power * 50 / 500) * 500);
+export const bounty = (m) => (m.training ? 500 : m.boss ? 25000 : Math.round((m.basePower || m.power) * 50 / 500) * 500);
+/** Loud FUD (level 3 and up) never gets easy: if the hunter's autopilot would win more often than CAP allows, the
+ *  monster grows (more health and harder hits) until it doesn't. sim(power) → win share. The bounty keeps the
+ *  monster's own strength. */
+export const FUD_CAP = { 3: 0.7, 4: 0.65, 5: 0.6 };
+export function scaleForHunter(m, sim) {
+  const lv = Math.min(5, m.forge?.level || 0), cap = FUD_CAP[lv];
+  if (!cap || m.boss || m.training || sim(m.power) <= cap) return m;
+  let lo = m.power, hi = m.power * 10;
+  for (let i = 0; i < 12; i++) { const mid = (lo + hi) / 2; if (sim(mid) > cap) lo = mid; else hi = mid; }
+  return { ...m, basePower: m.power, power: Math.ceil(hi) };
+}
 export const fmtChog = (n) => Math.round(n).toLocaleString('en-US');
 const WALLET_KEY = 'chog-contracts-chog';
 export function chogBalance() { try { return Number(localStorage.getItem(WALLET_KEY)) || 0; } catch { return 0; } }

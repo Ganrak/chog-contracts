@@ -1,6 +1,6 @@
 // The demo page's own code (moved out of demo.html so the Content-Security-Policy can forbid inline scripts).
 import { buildKit, randomTraits, seeded, ELEMENTS } from './kit.js';
-import { MONSTERS, monsterFromPost, remember, injure, injuredLeft, healNow, spendChog, grantChog, INJURY_H, HEAL_COST, tuckIn, tuckWait, TUCK_MIN, TUCK_EVERY_MIN, bounty, payBounty, chogBalance, fmtChog, dailyContracts, dailyState, winDaily, dayKey, loadProgress, saveProgress as saveProgressLocal, fresh, xpToNext, hunterStats, matchup, settle, drink, loadBag, addPotion, usePotion, newOwner } from './game.js';
+import { MONSTERS, monsterFromPost, remember, injure, injuredLeft, healNow, spendChog, grantChog, INJURY_H, HEAL_COST, tuckIn, tuckWait, TUCK_MIN, TUCK_EVERY_MIN, bounty, payBounty, chogBalance, fmtChog, scaleForHunter, dailyContracts, dailyState, winDaily, dayKey, loadProgress, saveProgress as saveProgressLocal, fresh, xpToNext, hunterStats, matchup, settle, drink, loadBag, addPotion, usePotion, newOwner } from './game.js';
 import { simulate, seededRand } from './combat.js';
 import { lbMessage, cleanName } from './replay.js';
 import { openHunt } from './arena.js';
@@ -380,7 +380,7 @@ function renderBoard() {
     const auto = autoPickOn() && better ? better : null;
     const H = auto ? auto.h : current, S = auto ? auto.s : st, L = prog(H).level, hHurt = auto ? 0 : hurt, hAway = auto ? false : away;
     // odds = how often the autopilot wins this fight; smart play beats it
-    const mu = matchup(S, m), pct = Math.min(99, Math.round(simulate(S, m, { level: L, ghost: !!H.ghost }, 120) * 100)); // a fight is never a sure thing: 99% at most
+    const mm = tuned(m, S, L, !!H.ghost, H.id), mu = matchup(S, mm), pct = Math.min(99, Math.round(simulate(S, mm, { level: L, ghost: !!H.ghost }, 120) * 100)); // a fight is never a sure thing: 99% at most
     // the Apprentice is the free trial: training + today's easy contract. The rest needs a Chog (yours or hired)
     const chogOnly = !!H.ghost && !(m.training || (m.daily && m.id.endsWith('-0'))), locked = chogOnly || (m.boss && L < m.unlock);
     const preview = isPreview(H); // someone else's Chog, pasted: look, don't play
@@ -1011,11 +1011,19 @@ $('#samples').addEventListener('click', (e) => { const b = e.target.closest('but
 
 /* ---------- the hunt: turn-based, in the arena ---------- */
 let stopCan = null;
+// the contract as this hunter meets it (loud FUD scaled to them), worked out once per hunter, level and contract
+const tunedCache = new Map();
+function tuned(m, S, L, ghost, hid) {
+  const key = `${m.id}|${hid}|${L}|${S.power}`;
+  if (!tunedCache.has(key)) tunedCache.set(key, scaleForHunter(m, (power) => simulate(S, { ...m, power }, { level: L, ghost }, 120)));
+  return tunedCache.get(key);
+}
 async function hunt(m) {
   const p = prog(current);
   const ranked = m.boss ? await rankedTicket(current).catch(() => null) : null; // the weekly boss counts on the shared board
   // a ranked hunt is fought at the server's fixed level (as its replay is), so everyone meets the boss on equal terms
   const lvl = ranked?.level || p.level, st = ranked?.level ? hunterStats(current, { level: lvl }) : hunterStats(current, p);
+  if (!ranked) m = tuned(m, st, lvl, !!current.ghost, current.id); // loud FUD grows with the hunter, as on its card
   if (ranked?.level) toast(`Ranked hunt: every Chog fights a <b>raid boss</b> at <b>level ${lvl}</b>. Your best 3 hunts of the week make your score.`);
   if (ranked?.hpMult > 1) m = { ...m, hpMult: ranked.hpMult }; // the same raid-boss health the server replays with
   openHunt({
