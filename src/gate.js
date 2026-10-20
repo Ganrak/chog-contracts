@@ -337,7 +337,8 @@ export function startGate({ gate, canvas, pctEl, tagEl, hunters, spare = [], wel
     if (underGlow && !reduce) underGlow.material.opacity = 0.55 + 0.18 * Math.sin(t * 5.3) * Math.sin(t * 2.1 + 1); // firelight flickers
     if (gateReady) intro = Math.min(1, (now - readyAt) / 2600);
     const iE = reduce ? 1 : expoOut(intro);
-    if (opening >= 0) opening = Math.min(1, (now - openAt) / 2400);
+    // the frame's timestamp can be a hair older than the click: never let it go negative, or the door stalls shut
+    if (opening >= 0) opening = clamp((now - openAt) / 2400, 0, 1);
     const op = Math.max(0, opening);
     ray.setFromCamera(mouse, camera);
     const hit = opening < 0 ? ray.intersectObjects(scene.children, true)[0] : null;
