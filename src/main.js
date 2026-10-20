@@ -23,7 +23,7 @@ import { drawShareCard, shareHunt, saveCard, shareImage } from './share.js';
 import { musicOn, setMusic } from './music.js';
 import { startMotion as startTouches } from './motion.js';
 import { POOL, poolPrize } from './pool.js';
-import { loadCapsule, claimDaily, earnToken, spin as capsuleSpin, odds as capsuleOdds, nextFreeIn, MAX_TOKENS } from './capsule.js';
+import { CAPSULE_ON, loadCapsule, claimDaily, earnToken, spin as capsuleSpin, odds as capsuleOdds, nextFreeIn, MAX_TOKENS } from './capsule.js';
 import { listWallets, connect, ownershipMessage, signOwnership, listingMessage, signText, disconnect, load as loadWallet, short } from './wallet.js';
 
 const $ = (s) => document.querySelector(s);
@@ -1038,7 +1038,7 @@ async function hunt(m) {
       gain.avenged = res.win && (p.log || []).some((e) => !e.win && !e.trip && e.kind === m.kind && !e.avenged);
       remember(p, m, res, { hired: !!current.hired, chog: res.win ? bounty(m) : 0 });
       if (!res.win) injure(p, injuryHours(current)); // losing hurts: hours off, or pay a healer
-      if ((res.win && m.daily) || m.boss) { if (earnToken()) setTimeout(() => toast('+1 capsule token for the Chog Capsule in the arcade.'), 1800); }
+      if (CAPSULE_ON && ((res.win && m.daily) || m.boss)) { if (earnToken()) setTimeout(() => toast('+1 capsule token for the Chog Capsule in the arcade.'), 1800); }
       if (m.boss) { bossLeft = Math.max(0.05, bossLeft - (res.win ? 0.06 : 0.02)); addBossDamage(res.dmg || 0, res.win); if (ranked) submitRanked(ranked, res, lvl); }
       saveProgress(progress);
       setTimeout(() => showResult(m, res, gain, close), 1500); // time to see the win/lose line first

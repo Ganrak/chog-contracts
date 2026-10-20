@@ -1,3 +1,4 @@
+import { CAPSULE_ON } from './capsule.js';
 // The Chog Arcade: a painted room (assets/arcade/arcade.webp) with five cabinets. Their screens are live canvases
 // laid over the painting: the Brick Studio one shows your Chog in pixels, Chog Drop rains blocks, Wannabe Run has a
 // tiny runner, and the two empty cabinets show static. Click a cabinet to open its game under the room.
@@ -5,7 +6,7 @@
 const IW = 1672, IH = 941; // the painting's own pixels
 // [game, cabinet box, screen box, marquee centre] in painting pixels
 const MACHINES = [
-  { game: 'capsule', name: 'Chog Capsule', cab: [175, 250, 237, 410], screen: [220, 325, 150, 116], label: [300, 282] },
+  CAPSULE_ON ? { game: 'capsule', name: 'Chog Capsule', cab: [175, 250, 237, 410], screen: [220, 325, 150, 116], label: [300, 282] } : { game: 'soon', name: 'Coming soon', cab: [175, 250, 237, 410], screen: [220, 325, 150, 116], label: [300, 282] },
   { game: 'drop', name: 'Chog Drop', cab: [445, 250, 227, 410], screen: [487, 325, 151, 116], label: [560, 282] },
   { game: 'studio', name: 'Brick Studio', cab: [705, 222, 262, 445], screen: [750, 310, 176, 133], label: [836, 262] },
   { game: 'run', name: 'Wannabe Run', cab: [1005, 250, 222, 410], screen: [1042, 325, 151, 116], label: [1120, 282] },

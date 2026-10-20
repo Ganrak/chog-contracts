@@ -4,6 +4,7 @@
 
 const KEY = 'chog-contracts-capsule';
 export const MAX_TOKENS = 5;
+export const CAPSULE_ON = false; // hidden until its machine art is ready: the cabinet shows 'Coming soon', no tokens are handed out
 
 // [weight, prize]; the odds are shown on the machine
 export const PRIZES = [
