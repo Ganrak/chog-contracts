@@ -19,9 +19,7 @@
 <meta name="twitter:image" content="assets/brand/og.jpg">
 <link rel="icon" type="image/png" sizes="64x64" href="assets/brand/favicon-64.png">
 <link rel="apple-touch-icon" href="assets/brand/favicon-180.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Koulen&family=Inter:wght@400;500;600;700&family=Grenze+Gotisch:wght@700&family=Grenze:wght@700;800&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="assets/fonts.css"><!-- our own copies: no visitor IP goes to Google -->
 <style>
 /* Layout: gate first, then one short page in play order: pick a hunter, pick a contract, hunt, grow.
    Chog brand language (chogathon / mint / portal): Koulen display, Inter body, mono labels, Monad purple and Chog pink,
@@ -1015,6 +1013,15 @@ body.tab-brick .side-deco, body.tab-room .side-deco{display:none} /* they sit be
 .foot-sep i:last-child{background:linear-gradient(90deg, #e845a4, #836ef9 60%, transparent)}
 .foot-sep img{height:26px; width:auto; filter:brightness(0) drop-shadow(0 0 1px #c9bfff) drop-shadow(0 0 6px rgba(131,110,249,.8))}
 .foot-sep img:nth-of-type(2){height:30px; filter:brightness(0) drop-shadow(0 0 1px #f39ad0) drop-shadow(0 0 6px rgba(232,69,164,.8))}
+/* privacy and terms: two small fold-outs above the divider, no script needed */
+.foot-legal{grid-column:1 / -1; display:flex; flex-wrap:wrap; align-items:flex-start; gap:10px 14px}
+.foot-legal details{flex:1 1 320px; max-width:560px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.02)}
+.foot-legal summary{cursor:pointer; padding:10px 14px; font:700 11.5px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; color:var(--fg); list-style:none}
+.foot-legal summary::-webkit-details-marker{display:none}
+.foot-legal summary::after{content:"+"; float:right; color:#a99bfc} .foot-legal details[open] summary::after{content:"−"}
+.foot-legal ul{margin:0; padding:0 16px 14px 30px; display:flex; flex-direction:column; gap:6px; font-size:13px; line-height:1.5}
+.foot-legal a{color:#c9bfff}
+.foot-legal > span{align-self:center; font:600 11px/1 var(--mono); letter-spacing:.06em; opacity:.7}
 .foot-bar{grid-column:1 / -1; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; padding-top:4px; font:600 11.5px/1.4 var(--mono); letter-spacing:.06em}
 .foot a{color:#c9bfff; text-decoration:none; border-bottom:1px solid rgba(201,191,255,.4)} .foot a:hover{color:#fff; border-color:#e845a4}
 @media (max-width:860px){ .foot{grid-template-columns:minmax(0,1fr); padding:30px 20px 18px; gap:24px} }
@@ -1785,6 +1792,31 @@ body.unbox .tr-card{background:rgba(255,255,255,.025)}
         <li>Monsters, the Wannabe Chog, its room and items, the map, the arenas and the arcade: made with AI image tools and cut by hand.</li>
         <li>Potion bottles: a Sketchfab model.</li>
       </ul>
+    </div>
+    <div class="foot-legal">
+      <details>
+        <summary>Privacy</summary>
+        <ul>
+          <li>No cookies, no analytics, no ads, no trackers. The code and the fonts all come from this site.</li>
+          <li>Your game progress is saved in your own browser. "Reset demo" in the account menu erases it.</li>
+          <li>When you connect, our server keeps only what the game needs: your public wallet address, the hunter name you pick, your weekly boss scores and your Chog's story. A story is stored with the token and anyone can read it, like the NFT itself.</li>
+          <li>To see which Chogs you hold, your browser reads the public Monad blockchain and loads Chog art from IPFS.</li>
+          <li>We never ask for your email or seed phrase, and never sell or share your data.</li>
+          <li>The site is hosted on Netlify, which keeps standard request logs (such as IP addresses) to run it.</li>
+          <li>Want your name, scores or stories removed? Message <a href="https://x.com/Ganraktv" target="_blank" rel="noopener">@Ganraktv</a> on X.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Terms</summary>
+        <ul>
+          <li>Chog Contracts is a free fan-made demo for Chogathon 2026, offered as is, with no guarantees.</li>
+          <li>"Test $CHOG" in the game is a score, not a token: it has no value and can't be withdrawn.</li>
+          <li>The site never asks for a transaction or an approval. The send-to-yourself login is your own transfer to your own wallet; you only pay its gas.</li>
+          <li>Play fair: scores that cheat the leaderboard can be removed.</li>
+          <li>Chog Genesis art belongs to its creators. Nothing here is financial advice.</li>
+        </ul>
+      </details>
+      <span>Updated October 2026</span>
     </div>
     <div class="foot-sep" aria-hidden="true"><i></i><img src="assets/chogs/apprentice.png" alt=""><img src="assets/monsters/ghoul.png" alt=""><img src="assets/chogs/apprentice.png" alt=""><i></i></div>
     <div class="foot-bar">

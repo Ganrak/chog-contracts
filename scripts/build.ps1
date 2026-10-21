@@ -16,6 +16,7 @@ Copy-Item "$root\demo.html" "$out\index.html"
 Copy-Item "$root\src\*.js" "$out\src\"
 Copy-Item "$root\vendor" "$out\vendor" -Recurse              # three.js served from our own site, not a CDN
 Copy-Item "$root\assets\potions-glb.json" "$out\assets\"
+Copy-Item "$root\assets\fonts.css" "$out\assets\"; Copy-Item "$root\assets\fonts" "$out\assets\fonts" -Recurse  # fonts from our own site, not Google
 Copy-Item "$root\assets\monsters\*.png" "$out\assets\monsters\"
 Copy-Item "$root\assets\monsters\attack\*.png" "$out\assets\monsters\attack\"
 Copy-Item "$root\assets\chogs\*.webp", "$root\assets\chogs\apprentice*.png", "$root\assets\chogs\close-*-sm.png" "$out\assets\chogs\"  # NFT art + the Apprentice cut-outs and strips + small strip thumbnails
@@ -43,8 +44,8 @@ $hashes = @($map, $map.Replace("`r`n", "`n")) | Select-Object -Unique | ForEach-
 $csp = @(
   "default-src 'self'",
   "script-src 'self' $($hashes -join ' ')",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self'",
   "img-src 'self' data: blob: https:",
   "connect-src 'self' data: blob: https://rpc.monad.xyz https://ipfs.filebase.io",
   "media-src 'self'",
