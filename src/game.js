@@ -176,6 +176,14 @@ export function scaleForHunter(m, sim) {
   for (let i = 0; i < 12; i++) { const mid = (lo + hi) / 2; if (sim(mid) > cap) lo = mid; else hi = mid; }
   return { ...m, basePower: m.power, power: Math.ceil(hi) };
 }
+/** The other way round: a monster the Wannabe forged itself shrinks until its autopilot wins about `target` (75%) of the
+ *  time, so pasting any post always gives a fight you can win. The bounty keeps the monster's own strength. */
+export function scaleDownFor(m, sim, target = 0.75) {
+  if (sim(m.power) >= target) return m;
+  let lo = Math.max(1, m.power * 0.15), hi = m.power;
+  for (let i = 0; i < 12; i++) { const mid = (lo + hi) / 2; if (sim(mid) >= target) lo = mid; else hi = mid; }
+  return { ...m, basePower: m.basePower || m.power, power: Math.floor(lo) };
+}
 export const fmtChog = (n) => Math.round(n).toLocaleString('en-US');
 const WALLET_KEY = 'chog-contracts-chog';
 export function chogBalance() { try { return Number(localStorage.getItem(WALLET_KEY)) || 0; } catch { return 0; } }
@@ -195,7 +203,7 @@ export function payBounty(m, hired) {
 
 /* ---------- losing hurts: the hunter is injured (no hunting) for 3 h, or 1.5 h for a Chog you own; a healer
    patches it up now for test $CHOG. Never touches the NFT or the wallet; only this game's progress. ---------- */
-export const INJURY_H = { owner: 1.5, other: 3 }, HEAL_COST = 10000;
+export const INJURY_H = { owner: 1.5, other: 3, wannabe: 0.25 }, HEAL_COST = 10000;
 export const injuredLeft = (p) => Math.max(0, (p.hurtUntil || 0) - Date.now());
 export function injure(p, hours) { p.hurtUntil = Date.now() + hours * 3600000; }
 export function healNow(p) {

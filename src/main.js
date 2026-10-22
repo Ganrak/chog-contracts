@@ -1,6 +1,6 @@
 // The demo page's own code (moved out of demo.html so the Content-Security-Policy can forbid inline scripts).
 import { buildKit, randomTraits, seeded, ELEMENTS } from './kit.js';
-import { MONSTERS, monsterFromPost, remember, injure, injuredLeft, healNow, spendChog, grantChog, INJURY_H, HEAL_COST, tuckIn, tuckWait, TUCK_MIN, TUCK_EVERY_MIN, bounty, payBounty, chogBalance, fmtChog, scaleForHunter, dailyContracts, dailyState, winDaily, dayKey, loadProgress, saveProgress as saveProgressLocal, fresh, xpToNext, hunterStats, matchup, settle, drink, loadBag, addPotion, usePotion, newOwner } from './game.js';
+import { MONSTERS, monsterFromPost, remember, injure, injuredLeft, healNow, spendChog, grantChog, INJURY_H, HEAL_COST, tuckIn, tuckWait, TUCK_MIN, TUCK_EVERY_MIN, bounty, payBounty, chogBalance, fmtChog, scaleForHunter, scaleDownFor, dailyContracts, dailyState, winDaily, dayKey, loadProgress, saveProgress as saveProgressLocal, fresh, xpToNext, hunterStats, matchup, settle, drink, loadBag, addPotion, usePotion, newOwner } from './game.js';
 import { simulate, seededRand, traitSource } from './combat.js';
 import { lbMessage, cleanName } from './replay.js';
 import { openHunt } from './arena.js';
@@ -388,7 +388,8 @@ function renderBoard() {
     // odds = how often the autopilot wins this fight; smart play beats it
     const mm = tuned(m, S, L, !!H.ghost, H.id), mu = matchup(S, mm), pct = Math.min(99, Math.round(simulate(S, mm, { level: L, ghost: !!H.ghost }, 120) * 100)); // a fight is never a sure thing: 99% at most
     // the Apprentice is the free trial: training + today's easy contract. The rest needs a Chog (yours or hired)
-    const chogOnly = !!H.ghost && !(m.training || (m.daily && m.id.endsWith('-0'))), locked = chogOnly || (m.boss && L < m.unlock);
+    // the Wannabe trains, takes today's first contract, and may fight a monster it forged itself (the hook must work without a Chog)
+    const chogOnly = !!H.ghost && !(m.training || m.custom || (m.daily && m.id.endsWith('-0'))), locked = chogOnly || (m.boss && L < m.unlock);
     const preview = isPreview(H); // someone else's Chog, pasted: look, don't play
     const hire = FOR_HIRE.find((c) => c.element === m.weak && !hoursLeft(c)) || FOR_HIRE.find((c) => !hoursLeft(c));
     const col = pct >= 65 ? 'var(--good)' : pct >= 40 ? 'var(--ember)' : 'var(--bad)';
@@ -413,7 +414,7 @@ function renderBoard() {
   }).join('');
 }
 // injuries: 3 h for the Wannabe and hired Chogs, 1.5 h for a Chog you own
-const injuryHours = (h) => (isOwned(h) ? INJURY_H.owner : INJURY_H.other);
+const injuryHours = (h) => (h?.ghost ? INJURY_H.wannabe : isOwned(h) ? INJURY_H.owner : INJURY_H.other); // the free Wannabe is back in 15 min, so a first loss never locks a newcomer out
 const dur = (ms) => { const m = Math.ceil(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`; };
 // the injury strip above the board: time left, and a healer for test $CHOG
 let hurtShown = false;
@@ -911,11 +912,21 @@ let pendingList = null;
 const TEST_OWNER = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && (() => { try { return localStorage.getItem('chog-contracts-test-owner') === '1'; } catch { return false; } })();
 const ownedVerified = () => { const v = verifiedTokens(); return HUNTERS.filter((h) => h.brought && v.includes(h.token)); };
 function renderMine() { $('#mine').innerHTML = ''; } // renting out lives in one line under 'Got a Chog?' now
+function listDemo(hs) {
+  const toks = hs.map((h) => h.token);
+  listings = listings.filter((l) => !toks.includes(l.token));
+  for (const h of hs) listings.push({ token: h.token, name: h.name, img: h.img, traits: h.traits, owner: 'whale-mode', at: Date.now(), sig: 'demo' });
+  saveListings(); sfx('coin'); renderHire(); renderHunters(); renderBoard();
+  toast(`${hs.length > 1 ? `<b>${hs.length} test Chogs</b> are` : `<b>${esc(hs[0].name)}</b> is`} rented out. Demo renters take them on hunts and you get 30% of each bounty.`);
+}
 /** Rent out one Chog, or a whole stable at once: one signature covers every token in the list. */
 function startListing(token) { startListingMany([token]); }
 function startListingMany(tokens) {
   const hs = tokens.map((tok) => HUNTERS.find((x) => x.brought && x.token === tok)).filter(Boolean); if (!hs.length) return;
   const label = hs.length > 1 ? `${hs.length} Chogs` : hs[0].name;
+  // whale mode's test Chogs belong to nobody: they list without a wallet, so anyone can try renting out a stable
+  const demo = hs.every((h) => whaleTest().includes(h.token));
+  if (demo) { listDemo(hs); return; }
   if (!TEST_OWNER && !wActive) { pendingList = hs[0].token; openWallet(); $('#wpick-msg').textContent = `Connect the wallet that holds ${label} to sign the listing.`; return; }
   if (!TEST_OWNER && hs.some((h) => !wTokens.includes(h.token))) { pendingList = null; wShow('done'); wpop.hidden = false; $('#wstatus').textContent = `This wallet doesn't hold ${label}. Connect the one that does.`; return; }
   pendingList = null;
@@ -1054,7 +1065,8 @@ let stopCan = null;
 const tunedCache = new Map();
 function tuned(m, S, L, ghost, hid) {
   const key = `${m.id}|${hid}|${L}|${S.power}`;
-  if (!tunedCache.has(key)) tunedCache.set(key, scaleForHunter(m, (power) => simulate(S, { ...m, power }, { level: L, ghost }, 120)));
+  const sim = (power) => simulate(S, { ...m, power }, { level: L, ghost }, 120);
+  if (!tunedCache.has(key)) tunedCache.set(key, ghost && m.custom ? scaleDownFor(m, sim) : scaleForHunter(m, sim));
   return tunedCache.get(key);
 }
 async function hunt(m) {
@@ -1115,9 +1127,9 @@ function showResult(m, res, gain, close) {
   } else {
     box.innerHTML = `<div class="card"><div class="noCan">fled</div>
       <div><p class="eyebrow">Injured</p><h3>The ${esc(m.name)} got away</h3>
-      <p>${esc(current.name)} is hurt and can't hunt for ${injuryHours(current)} hours${current.ghost || current.hired ? ' (a Chog you own heals in half the time)' : ' (owners heal twice as fast)'}, unless a healer patches it up for ${fmtChog(HEAL_COST)} test $CHOG. The loss goes into its journal as a scar; beat a ${esc(KIND_NAME[m.kind] || 'monster')} later to avenge it.</p>
-      <p class="lv">Next time guard (W) when it says HEAVY, or bring a ${weak} Chog.</p>
-      <div class="gains"><span>+${gain.xp} XP</span><span class="hurt">Injured · ${injuryHours(current)} h</span><span class="hurt">+1 scar</span>${gain.levelUp ? `<span class="up">Level ${gain.level}! · +8% health & damage</span>` : ''}</div>
+      <p>${esc(current.name)} is hurt and can't hunt for ${dur(injuryHours(current) * 3600000)}${current.ghost ? ' (it\'s only a Wannabe: it bounces back fast)' : current.hired ? ' (a Chog you own heals in half the time)' : ' (owners heal twice as fast)'}, unless a healer patches it up for ${fmtChog(HEAL_COST)} test $CHOG. The loss goes into its journal as a scar; beat a ${esc(KIND_NAME[m.kind] || 'monster')} later to avenge it.</p>
+      <p class="lv">Next time guard (W) when it says HEAVY, or bring a ${weak} Chog.${current.ghost ? ' Or hire a real Chog below and keep hunting now.' : ''}</p>
+      <div class="gains"><span>+${gain.xp} XP</span><span class="hurt">Injured · ${dur(injuryHours(current) * 3600000)}</span><span class="hurt">+1 scar</span>${gain.levelUp ? `<span class="up">Level ${gain.level}! · +8% health & damage</span>` : ''}</div>
       <button type="button" class="btn" id="done">Back to the board</button></div></div>`;
   }
   box.hidden = false;
