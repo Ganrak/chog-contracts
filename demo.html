@@ -989,16 +989,24 @@ html{overflow-x:clip} /* edge-to-edge bands use 100vw, which counts the scrollba
 @media (min-width:1200px){ header.top{margin-inline:calc(50% - 50vw); padding-inline:clamp(24px, 4vw, 72px)} }
 .wrap{position:relative; z-index:1}
 @media (min-width:1440px){ .side-deco{display:block} }
-/* the Arcade and the Room are shorter pages: the same figures, packed into their content so the page doesn't grow */
-body.tab-brick .side-deco{top:140px; height:820px}
-body.tab-room .side-deco{top:140px; height:1120px}
+/* one set per page: monsters on Hunt, arcade things in the Arcade, the room's own items in the Room.
+   The Arcade and the Room are shorter: their sets are packed into the content so the page doesn't grow */
+@media (min-width:1440px){
+  .side-deco.for-brick, .side-deco.for-room, body.tab-brick .side-deco.for-hunt, body.tab-room .side-deco.for-hunt{display:none}
+  body.tab-brick .side-deco.for-brick, body.tab-room .side-deco.for-room{display:block}
+}
+.side-deco.for-brick{top:140px; height:820px}
+.side-deco.for-room{top:140px; height:1120px}
+.side-deco span{position:absolute; display:block; width:clamp(70px, 6vw, 120px); aspect-ratio:1; opacity:.22; filter:drop-shadow(0 0 1px #a99bfc) drop-shadow(0 0 14px rgba(131,110,249,.7)); animation:sideFloat var(--t, 9s) ease-in-out var(--d, 0s) infinite}
+.side-deco span.r{filter:drop-shadow(0 0 1px #f39ad0) drop-shadow(0 0 14px rgba(232,69,164,.65))}
+.side-deco span svg{display:block; width:100%; height:100%; fill:#000}
 .side-deco img{position:absolute; width:clamp(70px, 6vw, 120px); opacity:.22; filter:brightness(0) drop-shadow(0 0 1px #a99bfc) drop-shadow(0 0 14px rgba(131,110,249,.7)); animation:sideFloat var(--t, 9s) ease-in-out var(--d, 0s) infinite}
 .side-deco img.r{filter:brightness(0) drop-shadow(0 0 1px #f39ad0) drop-shadow(0 0 14px rgba(232,69,164,.65))}
 .side-deco i{position:absolute; width:6px; height:6px; background:#a99bfc; box-shadow:0 0 10px #a99bfc; opacity:.5; animation:sideTwinkle 3.5s ease-in-out var(--d, 0s) infinite}
 .side-deco i.r{background:#e845a4; box-shadow:0 0 10px #e845a4}
 @keyframes sideFloat{50%{transform:translateY(-22px) rotate(-4deg)}}
 @keyframes sideTwinkle{50%{opacity:.08; transform:scale(.5)}}
-@media (prefers-reduced-motion:reduce){ .side-deco img,.side-deco i{animation:none} }
+@media (prefers-reduced-motion:reduce){ .side-deco img,.side-deco span,.side-deco i{animation:none} }
 .foot-brand .mark{font-size:26px}
 .foot-bar .by{font-size:15px} .foot-bar .by a{font-size:18px; font-weight:700}
 .foot-brand p{margin:10px 0 14px; color:var(--fg); font-size:15px; max-width:30ch}
@@ -1639,13 +1647,32 @@ body.unbox .tr-card{background:rgba(255,255,255,.025)}
   </div>
 </div>
 
-<div class="side-deco" aria-hidden="true">
+<!-- side silhouettes: monsters on the Hunt page, arcade things in the Arcade, the room's own items in the Room -->
+<div class="side-deco for-hunt" aria-hidden="true">
   <img src="assets/monsters/ghoul.png" alt="" style="left:calc((100vw - 1120px) / 4 - 50px); top:14%; --t:10s">
   <img src="assets/monsters/harpy.png" alt="" style="left:calc((100vw - 1120px) / 4 - 70px); top:52%; --t:12s; --d:-4s">
   <img src="assets/monsters/golem.png" alt="" style="left:calc((100vw - 1120px) / 4 - 30px); top:80%; --t:9s; --d:-2s">
   <img class="r" src="assets/monsters/wraith.png" alt="" style="right:calc((100vw - 1120px) / 4 - 50px); top:20%; --t:11s; --d:-3s">
   <img class="r" src="assets/monsters/thief.png" alt="" style="right:calc((100vw - 1120px) / 4 - 60px); top:58%; --t:10s; --d:-6s">
   <img class="r" src="assets/monsters/troll.png" alt="" style="right:calc((100vw - 1120px) / 4 - 40px); top:84%; --t:13s; --d:-1s">
+  <i style="left:6%; top:34%"></i><i style="left:12%; top:70%; --d:-1.2s"></i><i class="r" style="right:7%; top:40%; --d:-2s"></i><i class="r" style="right:13%; top:72%; --d:-.6s"></i>
+</div>
+<div class="side-deco for-brick" aria-hidden="true">
+  <span style="left:calc((100vw - 1120px) / 4 - 50px); top:12%; --t:10s; --d:0s"><svg viewBox="0 0 100 100"><path fill-rule="evenodd" d="M20 78h60a8 8 0 0 1 8 8v6H12v-6a8 8 0 0 1 8-8ZM46 40h8v40h-8ZM50 6a18 18 0 1 1 0 36 18 18 0 0 1 0-36ZM70 70a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/></svg></span>
+  <span style="left:calc((100vw - 1120px) / 4 - 70px); top:48%; --t:12s; --d:-4s"><svg viewBox="0 0 100 100"><path fill-rule="evenodd" d="M10 30h80v27H63v27H37V57H10Z"/></svg></span>
+  <span style="left:calc((100vw - 1120px) / 4 - 30px); top:80%; --t:9s; --d:-2s"><svg viewBox="0 0 100 100"><path fill-rule="evenodd" d="M50 8a42 42 0 1 1 0 84 42 42 0 0 1 0-84Zm0 12a30 30 0 1 0 0 60 30 30 0 0 0 0-60Zm-4 10h8v6c6 1 10 5 10 10h-8c0-3-3-4-6-4s-6 1-6 4 3 4 8 5c7 2 12 5 12 12 0 5-4 9-10 10v7h-8v-7c-6-1-11-5-11-11h8c0 3 3 5 7 5s7-2 7-4-3-4-8-5c-7-2-12-5-12-12 0-5 4-9 10-10Z"/></svg></span>
+  <span class="r" style="right:calc((100vw - 1120px) / 4 - 50px); top:16%; --t:11s; --d:-3s"><svg viewBox="0 0 100 100"><path fill-rule="evenodd" d="M24 30h52c12 0 20 10 20 26 0 14-6 24-14 24-6 0-10-5-14-10H32c-4 5-8 10-14 10-8 0-14-10-14-24 0-16 8-26 20-26Zm2 12v6h-6v8h6v6h8v-6h6v-8h-6v-6Zm42 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm10 8a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/></svg></span>
+  <span class="r" style="right:calc((100vw - 1120px) / 4 - 60px); top:54%; --t:10s; --d:-6s"><svg viewBox="0 0 100 100"><path fill-rule="evenodd" d="M6 40h88v42H6ZM14 26h16v14H14ZM34 26h16v14H34ZM54 26h16v14H54ZM74 26h16v14H74Z"/></svg></span>
+  <span class="r" style="right:calc((100vw - 1120px) / 4 - 40px); top:82%; --t:13s; --d:-1s"><svg viewBox="0 0 100 100"><path fill-rule="evenodd" d="M50 8c22 0 36 16 36 38v46l-12-10-12 10-12-10-12 10-12-10-12 10V46C14 24 28 8 50 8Zm-14 30a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm28 0a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z"/></svg></span>
+  <i style="left:6%; top:34%"></i><i style="left:12%; top:70%; --d:-1.2s"></i><i class="r" style="right:7%; top:40%; --d:-2s"></i><i class="r" style="right:13%; top:72%; --d:-.6s"></i>
+</div>
+<div class="side-deco for-room" aria-hidden="true">
+  <img src="assets/room/items/lava.png" alt="" style="left:calc((100vw - 1120px) / 4 - 50px); top:12%; --t:10s; --d:0s">
+  <img src="assets/room/items/globe.png" alt="" style="left:calc((100vw - 1120px) / 4 - 70px); top:46%; --t:12s; --d:-4s">
+  <img src="assets/room/items/sword.png" alt="" style="left:calc((100vw - 1120px) / 4 - 30px); top:78%; --t:9s; --d:-2s">
+  <img class="r" src="assets/room/items/cactus.png" alt="" style="right:calc((100vw - 1120px) / 4 - 50px); top:14%; --t:11s; --d:-3s">
+  <img class="r" src="assets/room/items/piggy.png" alt="" style="right:calc((100vw - 1120px) / 4 - 60px); top:50%; --t:10s; --d:-6s">
+  <img class="r" src="assets/room/items/candle.png" alt="" style="right:calc((100vw - 1120px) / 4 - 40px); top:80%; --t:13s; --d:-1s">
   <i style="left:6%; top:34%"></i><i style="left:12%; top:70%; --d:-1.2s"></i><i class="r" style="right:7%; top:40%; --d:-2s"></i><i class="r" style="right:13%; top:72%; --d:-.6s"></i>
 </div>
 <div class="wrap">
