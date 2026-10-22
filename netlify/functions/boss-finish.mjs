@@ -49,6 +49,10 @@ export default async (req) => {
   entry.hunts += 1; if (r.win) entry.wins += 1;
   entry.name = chog.name; entry.token = chog.tokenId; entry.updated = Date.now();
   await store.setJSON(`w/${wallet}`, entry);
+  // the "latest hunts" feed next to the board: the last 20 counted hunts (only what the board already shows)
+  const feed = (await store.get('feed', { type: 'json' }).catch(() => null)) || [];
+  feed.unshift({ wallet, name: chog.name, token: chog.tokenId, dmg: r.dmg, win: !!r.win, at: Date.now() });
+  await store.setJSON('feed', feed.slice(0, 20)).catch(() => {});
   return json({ dmg: r.dmg, win: r.win, total: entry.dmg, best: entry.best });
 };
 export const config = { path: '/api/boss-finish' };

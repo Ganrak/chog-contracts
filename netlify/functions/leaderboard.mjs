@@ -1,4 +1,4 @@
-// GET /api/leaderboard?week=YYYY-MM-DD → { week, entries: [{ wallet, name, token, dmg, hunts, wins }] }, best first.
+// GET /api/leaderboard?week=YYYY-MM-DD → { week, entries: [{ wallet, name, token, dmg, hunts, wins }] best first, recent: [latest hunts] }
 import { getStore } from '@netlify/blobs';
 import { weekId, json } from '../lib/score.mjs';
 
@@ -13,6 +13,10 @@ export default async (req) => {
   // the hunter name each wallet chose (if any) goes next to its Chog's name
   const handles = await Promise.all(entries.map((e) => profiles.get(e.wallet, { type: 'json' }).catch(() => null)));
   const out = entries.map(({ wallet, name, token, dmg, hunts, wins }, i) => ({ wallet, handle: handles[i]?.name || null, name, token, dmg, hunts, wins }));
-  return json({ week, entries: out });
+  // the latest counted hunts, newest first, with the hunter name each wallet chose
+  const feed = ((await store.get('feed', { type: 'json' }).catch(() => null)) || []).slice(0, 12);
+  const named = new Map(out.map((e) => [e.wallet, e.handle]));
+  const recent = feed.map(({ wallet, name, token, dmg, win, at }) => ({ wallet, handle: named.get(wallet) || null, name, token, dmg, win, at }));
+  return json({ week, entries: out, recent });
 };
 export const config = { path: '/api/leaderboard' };

@@ -1,7 +1,7 @@
 // The demo page's own code (moved out of demo.html so the Content-Security-Policy can forbid inline scripts).
 import { buildKit, randomTraits, seeded, ELEMENTS } from './kit.js';
 import { MONSTERS, monsterFromPost, remember, injure, injuredLeft, healNow, spendChog, grantChog, INJURY_H, HEAL_COST, tuckIn, tuckWait, TUCK_MIN, TUCK_EVERY_MIN, bounty, payBounty, chogBalance, fmtChog, scaleForHunter, dailyContracts, dailyState, winDaily, dayKey, loadProgress, saveProgress as saveProgressLocal, fresh, xpToNext, hunterStats, matchup, settle, drink, loadBag, addPotion, usePotion, newOwner } from './game.js';
-import { simulate, seededRand } from './combat.js';
+import { simulate, seededRand, traitSource } from './combat.js';
 import { lbMessage, cleanName } from './replay.js';
 import { openHunt } from './arena.js';
 import { POTIONS, rewardCan } from './potions.js';
@@ -336,6 +336,9 @@ function renderStable() {
     <div class="stable-grid">${shown.map((h) => { const p = prog(h), st = hunterStats(h, p), E = st.kit.elementInfo, [sk, sl] = statusOf(h);
       return `<button type="button" class="tile" data-id="${h.id}" aria-pressed="${h === current}" style="--c:${E.color}"><span class="t-art">${art(h)}</span><b>${esc(h.ghost ? 'Wannabe' : h.name)}</b><small>${E.name} · ${st.power}</small><i class="t-st ${sk}">${sl}</i></button>`; }).join('')}</div>`;
 }
+// "Why these moves": each of the four moves next to the trait it came from, so the NFT → moveset link shows before a fight
+const whyMoves = (k) => `<span class="why" aria-label="Its moves and the traits they come from">${k.abilities.map((a) => { const s = traitSource(a);
+  return `<span class="why-row"><i>${a.key}</i><b>${esc(a.name)}</b>${s ? `<small>← ${esc(s)}</small>` : ''}</span>`; }).join('')}</span>`;
 function renderHunters() {
   if (HUNTERS.filter((h) => h.brought && isOwned(h)).length >= STABLE_AT) { renderStable(); return; }
   $('#hunters').classList.remove('is-stable');
@@ -347,6 +350,7 @@ function renderHunters() {
       <div><h3>${esc(h.name)}</h3><p class="tok">${h.ghost ? 'Free trial · no NFT needed' : h.hired ? `Owner keeps ${OWNER_CUT * 100}% of the loot` : `${esc(k.classInfo.name)} · ${esc(k.tier)}`}</p></div>
       <div class="row"><span class="chip" style="--c:${E.color}"><i></i>${E.name}</span><span class="pw">${st.power}<small>POWER</small></span></div>
       <p class="feats"><b style="color:${E.color}">${E.name}</b> ${esc(E.effect)}<br><b>${esc(k.classInfo.name)}</b> ${esc(ROLE_LINE[k.classInfo.role] || '')}</p>
+      ${whyMoves(k)}
       <div><div class="row"><span class="lv">Lv ${p.level} · ${trophies} trophies</span><span class="lv">${p.xp}/${xpToNext(p.level)} XP</span></div><div class="xp" style="--w:${(p.xp / xpToNext(p.level) * 100).toFixed(0)}%"><i></i></div></div>
     </button>`;
   }).join('') + (HUNTERS.some((h) => !h.ghost) ? '' : `<button type="button" class="hunter slot" data-slot="connect"><span class="plus">+</span><div><h3>Your Chog</h3><p class="tok">Connect your wallet and it hunts as itself. No Chog? Hire one below.</p></div></button>`);
@@ -455,6 +459,25 @@ function profRent(h) { // what renting has done for this Chog
   if (h.hired) { const s = demoOwnerStats(h.token); return `<div class="p-rent"><p class="j-h">Renting</p><p class="j-note">Its owner earned <b class="gold">${fmtChog(s.earned)} test $CHOG</b> from ${s.rentals} rentals without lifting a finger.</p></div>`; }
   return '';
 }
+// badges: read straight from the journal, so they travel with the token like the rest of its story
+const BADGES = [
+  ['First blood', 'Win a hunt', (p, hunts) => hunts.some((e) => e.win)],
+  ['Debunker', 'Win 10 hunts', (p, hunts) => hunts.filter((e) => e.win).length >= 10],
+  ['FUD smith', 'Beat a monster forged from your own post', (p, hunts) => hunts.some((e) => e.win && e.forged)],
+  ['Raider', 'Hunt the weekly boss', (p, hunts) => hunts.some((e) => e.boss)],
+  ['Wyrm slayer', 'Bring the weekly boss down', (p, hunts) => hunts.some((e) => e.boss && e.win)],
+  ['Quick hands', 'Win a hunt in 3 turns or fewer', (p, hunts) => hunts.some((e) => e.win && e.turns > 0 && e.turns <= 3)],
+  ['Avenger', 'Beat the kind of monster that scarred it', (p, hunts) => hunts.some((e) => e.avenged)],
+  ['Collector', 'A trophy from every monster', (p) => Object.keys(KIND_NAME).every((k) => (p.trophies[k] || 0) > 0)],
+  ['Explorer', 'Come back from 5 expeditions', (p, hunts, trips) => trips.length >= 5],
+  ['Veteran', 'Reach level 5', (p) => p.level >= 5],
+];
+function badgesHtml(p, log) {
+  const hunts = log.filter((e) => !e.trip), trips = log.filter((e) => e.trip);
+  const got = BADGES.map(([, , test]) => !!test(p, hunts, trips));
+  return `<div><p class="j-h">Badges · ${got.filter(Boolean).length}/${BADGES.length}</p></div>
+    <div class="badges">${BADGES.map(([name, how], i) => `<span class="badge${got[i] ? ' got' : ''}" title="${esc(how)}"><b>${esc(name)}</b><small>${got[i] ? 'Earned' : esc(how)}</small></span>`).join('')}</div>`;
+}
 function renderJournal() {
   if ($('#prof').hidden && !profH) return;
   const h = profH || current, p = prog(h), k = hunterStats(h, p).kit, E = k.elementInfo, log = p.log || [];
@@ -479,6 +502,7 @@ function renderJournal() {
       <div><p class="j-h">Trophy wall</p></div>
       <div class="trophies">${Object.keys(KIND_NAME).map((kind) => { const n = p.trophies[kind] || 0;
         return `<div class="trophy${n ? ' got' : ''}" style="--c:${MON_COLOR[kind]}" title="${KIND_NAME[kind]}${n ? ` ×${n}` : ': not hunted yet'}"><img src="assets/monsters/${kind}.png" alt="${KIND_NAME[kind]}${n ? `, hunted ${n} times` : ', not hunted yet'}">${n ? `<i>×${n}</i>` : ''}</div>`; }).join('')}</div>
+      ${badgesHtml(p, log)}
       <div><p class="j-h">Potions drunk in fights</p></div>
       <div class="drunk">${POTIONS.map((P, i) => `<span style="--c:${P.color}"><i></i>${P.name} ×${drunk[i]}</span>`).join('')}</div>
       <p class="j-note">${esc(note)}</p>
@@ -673,10 +697,10 @@ function renderLeaderboard() {
   const end = new Date(weekStart().getTime() + 7 * 864e5), left = end - Date.now(), d = Math.floor(left / 864e5), h = Math.floor(left % 864e5 / 36e5);
   const row = (r, i) => `<li class="${r.me ? 'me' : ''}${i < 3 ? ` top top${i + 1}` : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(r.name)}${r.me ? '' : ' <small>demo</small>'}</span><span class="lb-dmg">${r.dmg.toLocaleString('en-US')}</span><span class="lb-hunts">${r.wins}/${r.hunts}</span><span class="lb-share">${shareCell(i)}</span></li>`;
   const top = all.slice(0, 10).map(row).join('');
-  el.innerHTML = `<div class="lb-head"><div><p class="eyebrow">This week</p><h3>Boss leaderboard</h3><p>Your best 3 hunts against <b>${esc(BOSS.name)}</b>, added up. Top 10 split the weekly $CHOG pool.</p></div>
+  el.innerHTML = `<div class="lb-head"><div><p class="eyebrow">This week</p><h3>Boss leaderboard</h3><p>Your best 3 hunts against <b>${esc(BOSS.name)}</b>, added up. ${poolWeek() ? "Top 10 split the weekly $CHOG pool." : "A weekly $CHOG pool for the top 10 opens soon."}</p></div>
     <div class="lb-clock"><small>Resets in</small><b>${d}d ${h}h</b></div></div>
-    <ol class="lb-list"><li class="lb-cols"><span>#</span><span>Hunter</span><span>Damage</span><span>Wins</span><span>Pool</span></li>${top}${myRank > 10 ? `<li class="lb-gap">…</li>${row(me, myRank - 1)}` : ''}</ol>
-    <p class="lb-note">${w.hunts ? `You're <b>#${myRank}</b> with ${w.dmg.toLocaleString('en-US')} damage.` : 'Hunt the weekly boss to get on the board.'} Other names are sample players in this demo.</p>`;
+    <ol class="lb-list"><li class="lb-cols"><span>#</span><span>Hunter</span><span>Damage</span><span>Wins</span><span>${poolWeek() ? "Pool" : "Share"}</span></li>${top}${myRank > 10 ? `<li class="lb-gap">…</li>${row(me, myRank - 1)}` : ''}</ol>
+    <p class="lb-note">${w.hunts ? `You're <b>#${myRank}</b> with ${w.dmg.toLocaleString('en-US')} damage.` : 'Hunt the weekly boss to get on the board.'} Other names are sample players in this demo.</p>${feedHtml(rivals.slice(0, 6).map((r, i) => ({ who: r.name, name: "", dmg: Math.round(r.dmg / Math.max(1, r.hunts)), win: i % 3 !== 1, at: Date.now() - (i * 47 + 12) * 60000 })), true)}`;
 }
 function renderLiveBoard(el) {
   const me = (wAddr || '').toLowerCase(), list = live.entries || [];
@@ -685,10 +709,16 @@ function renderLiveBoard(el) {
   const row = (r, i) => `<li class="${r.wallet === me ? 'me' : ''}${i < 3 ? ` top top${i + 1}` : ''}"><span class="lb-rank">${i + 1}</span><span class="lb-name">${esc(r.handle || short(r.wallet))} <small>${esc(r.name || 'Chog')}</small></span><span class="lb-dmg">${Number(r.dmg).toLocaleString('en-US')}</span><span class="lb-hunts">${r.wins}/${r.hunts}</span><span class="lb-share">${shareCell(i, true)}</span></li>`;
   const rows = list.slice(0, 10).map(row).join('') + (myRank > 10 ? `<li class="lb-gap">…</li>${row(list[myRank - 1], myRank - 1)}` : '');
   const canRank = wAddr && HUNTERS.some((x) => x.brought && isOwned(x));
-  el.innerHTML = `${poolCard()}<div class="lb-head"><div><p class="eyebrow">This week · live</p><h3>Boss leaderboard</h3><p>Your best 3 hunts against the raid boss <b>${esc(BOSS.name)}</b>, added up. Every hunt is replayed on the server before it counts. Top 10 split the weekly $CHOG pool.</p></div>
+  el.innerHTML = `${poolCard()}<div class="lb-head"><div><p class="eyebrow">This week · live</p><h3>Boss leaderboard</h3><p>Your best 3 hunts against the raid boss <b>${esc(BOSS.name)}</b>, added up. Every hunt is replayed on the server before it counts. ${poolWeek() ? "Top 10 split the weekly $CHOG pool." : "A weekly $CHOG pool for the top 10 opens soon."}</p></div>
     <div class="lb-clock"><small>Resets in</small><b>${d}d ${h}h</b></div></div>
-    <ol class="lb-list"><li class="lb-cols"><span>#</span><span>Hunter</span><span>Damage</span><span>Wins</span><span>Pool</span></li>${rows || '<li class="lb-gap">No hunts yet this week. Be the first.</li>'}</ol>
-    <p class="lb-note">${myRank ? `You're <b>#${myRank}</b>.` : canRank ? 'Hunt the weekly boss with your Chog to get on the board.' : 'Connect the wallet that holds your Chog to get on the board.'}</p>`;
+    <ol class="lb-list"><li class="lb-cols"><span>#</span><span>Hunter</span><span>Damage</span><span>Wins</span><span>${poolWeek() ? "Pool" : "Share"}</span></li>${rows || '<li class="lb-gap">No hunts yet this week. Be the first.</li>'}</ol>
+    <p class="lb-note">${myRank ? `You're <b>#${myRank}</b>.` : canRank ? 'Hunt the weekly boss with your Chog to get on the board.' : 'Connect the wallet that holds your Chog to get on the board.'}</p>${feedHtml((live.recent || []).map((e) => ({ who: e.handle || short(e.wallet), name: e.name, dmg: e.dmg, win: e.win, at: e.at })))}`;
+}
+// "Latest hunts" under the board: who hit the boss, how hard, how long ago
+const ago = (t) => { const m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`; };
+function feedHtml(items, demo = false) {
+  if (!items.length) return '';
+  return `<div class="lb-feed"><p class="eyebrow">Latest hunts${demo ? ' · demo' : ''}</p><ul>${items.map((e) => `<li><b>${esc(e.who)}</b>${e.name ? ` <small>${esc(e.name)}</small>` : ''} ${e.win ? 'brought down' : 'hit'} the boss for <span class="lb-dmg">${Number(e.dmg).toLocaleString('en-US')}</span><time>${ago(e.at)}</time></li>`).join('')}</ul></div>`;
 }
 $('#board').addEventListener('click', (e) => {
   const bb = e.target.closest('[data-best]');
