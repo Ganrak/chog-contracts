@@ -1,6 +1,6 @@
 // The demo page's own code (moved out of demo.html so the Content-Security-Policy can forbid inline scripts).
 import { buildKit, randomTraits, seeded, ELEMENTS } from './kit.js';
-import { MONSTERS, monsterFromPost, remember, injure, injuredLeft, healNow, spendChog, grantChog, INJURY_H, HEAL_COST, tuckIn, tuckWait, TUCK_MIN, TUCK_EVERY_MIN, bounty, payBounty, chogBalance, fmtChog, scaleForHunter, scaleDownFor, dailyContracts, dailyState, winDaily, dayKey, loadProgress, saveProgress as saveProgressLocal, fresh, xpToNext, hunterStats, matchup, settle, drink, loadBag, addPotion, usePotion, newOwner } from './game.js';
+import { MONSTERS, monsterFromPost, remember, injure, injuredLeft, healNow, spendChog, grantChog, INJURY_H, HEAL_COST, tuckIn, tuckWait, TUCK_MIN, TUCK_EVERY_MIN, bounty, payBounty, chogBalance, fmtChog, scaleForHunter, wannabeFloor, dailyContracts, dailyState, winDaily, dayKey, loadProgress, saveProgress as saveProgressLocal, fresh, xpToNext, hunterStats, matchup, settle, drink, loadBag, addPotion, usePotion, newOwner } from './game.js';
 import { simulate, seededRand, traitSource } from './combat.js';
 import { lbMessage, cleanName } from './replay.js';
 import { openHunt } from './arena.js';
@@ -387,9 +387,8 @@ function renderBoard() {
     const H = auto ? auto.h : current, S = auto ? auto.s : st, L = prog(H).level, hHurt = auto ? 0 : hurt, hAway = auto ? false : away;
     // odds = how often the autopilot wins this fight; smart play beats it
     const mm = tuned(m, S, L, !!H.ghost, H.id), mu = matchup(S, mm), pct = Math.min(99, Math.round(simulate(S, mm, { level: L, ghost: !!H.ghost }, 120) * 100)); // a fight is never a sure thing: 99% at most
-    // the Apprentice is the free trial: training + today's easy contract. The rest needs a Chog (yours or hired)
-    // the Wannabe trains, takes today's first contract, and may fight a monster it forged itself (the hook must work without a Chog)
-    const chogOnly = !!H.ghost && !(m.training || m.custom || (m.daily && m.id.endsWith('-0'))), locked = chogOnly || (m.boss && L < m.unlock);
+    // the Wannabe takes training and quiet FUD (level 1-2), forged or not; loud FUD and the boss need a real Chog
+    const chogOnly = !!H.ghost && !(m.training || (!m.boss && (m.forge?.level || 0) <= WANNABE_MAX_FUD)), locked = chogOnly || (m.boss && L < m.unlock);
     const preview = isPreview(H); // someone else's Chog, pasted: look, don't play
     const hire = FOR_HIRE.find((c) => c.element === m.weak && !hoursLeft(c)) || FOR_HIRE.find((c) => !hoursLeft(c));
     const col = pct >= 65 ? 'var(--good)' : pct >= 40 ? 'var(--ember)' : 'var(--bad)';
@@ -406,7 +405,7 @@ function renderBoard() {
       ${m.boss ? `<div class="shared"><div class="bar" style="--w:${(bossLeft * 100).toFixed(1)}%"><i></i></div><span>Everyone hits the same boss · weak spot changes every Monday (next: ${ELEMENTS[m.nextWeak]?.name || ''})</span></div>` : ''}
       <div class="odds">${chogOnly ? '<div><span>Needs a Chog</span></div>' : locked ? `<div><span>Unlocks at level ${m.unlock}</span></div>` : `<div title="How often your hunter wins this on autopilot. Playing it yourself does better."><b style="color:${col}">${pct}%</b> <span>win chance</span></div>`}<span class="bounty">${fmtChog(bounty(m))} test $CHOG</span></div>
       ${note && !chogOnly ? `<p class="lv">${esc(note)}</p>` : ''}
-      ${chogOnly ? `<p class="lv lock-why">The Wannabe only trains. This one needs a real Chog: yours or a hired one.</p>${hire ? `<button type="button" class="hint-hire" data-scroll-hire="${hire.token}">Hire a Chog for this</button>` : ''}` : ''}
+      ${chogOnly ? `<p class="lv lock-why">The Wannabe only takes quiet FUD (level 1-2). This one is loud: it needs a real Chog, yours or a hired one.</p>${hire ? `<button type="button" class="hint-hire" data-scroll-hire="${hire.token}">Hire a Chog for this</button>` : ''}` : ''}
       ${!chogOnly && mu.mult <= 1 && FOR_HIRE.some((c) => c.element === m.weak && !hoursLeft(c)) ? `<button type="button" class="hint-hire" data-scroll-hire="${FOR_HIRE.find((c) => c.element === m.weak).token}">No ${ELEMENTS[m.weak].name} Chog? Hire one</button>` : ''}
       ${better && !auto ? `<button type="button" class="hint-best" data-best="${better.h.id}">Best for this: ${esc(better.h.name)} (${better.s.kit.elementInfo.name})</button>` : ''}
       ${preview ? '<button type="button" class="btn" data-verify>Connect wallet to play</button>' : `<button type="button" class="btn${auto ? ' auto' : ''}" data-hunt="${i}"${auto ? ` data-auto="${H.id}"` : ''} ${locked || hHurt || hAway ? 'disabled' : ''}>${chogOnly ? 'Chog only' : hAway ? (tripBack(prog(H).trip) ? 'Back! Unpack in the room' : 'On an expedition') : hHurt ? `Injured · ${dur(hHurt)}` : locked ? `Reach level ${m.unlock}` : auto ? `Hunt with ${esc(H.name)} · ${S.kit.elementInfo.name}` : 'Hunt'}</button>`}
@@ -414,7 +413,8 @@ function renderBoard() {
   }).join('');
 }
 // injuries: 3 h for the Wannabe and hired Chogs, 1.5 h for a Chog you own
-const injuryHours = (h) => (h?.ghost ? INJURY_H.wannabe : isOwned(h) ? INJURY_H.owner : INJURY_H.other); // the free Wannabe is back in 15 min, so a first loss never locks a newcomer out
+const WANNABE_MAX_FUD = 2; // the loudest FUD the Wannabe may take on
+const injuryHours = (h) => (h?.ghost ? INJURY_H.wannabe : isOwned(h) ? INJURY_H.owner : INJURY_H.other); // Wannabe 2 h, your own Chog 1.5 h, hired 3 h
 const dur = (ms) => { const m = Math.ceil(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`; };
 // the injury strip above the board: time left, and a healer for test $CHOG
 let hurtShown = false;
@@ -1053,7 +1053,9 @@ $('#post').addEventListener('input', previewFud);
 // the hero's forge: same thing, first thing you see (empty? one of the sample posts)
 $('#hero-forge').addEventListener('submit', (e) => {
   e.preventDefault();
-  const samples = [...$('#samples').querySelectorAll('button')].map((b) => b.textContent);
+  // the Wannabe only takes quiet FUD, so with it an empty box picks a post it can actually fight
+  const samples = current.ghost ? ['monad is a ghost chain', 'this smells like trouble, mark my words', 'idk, monad feels kinda slow today']
+    : [...$('#samples').querySelectorAll('button')].map((b) => b.textContent);
   const text = $('#hero-post').value.trim() || samples[Math.floor(Math.random() * samples.length)];
   $('#hero-post').value = ''; forge(text);
 });
@@ -1066,7 +1068,7 @@ const tunedCache = new Map();
 function tuned(m, S, L, ghost, hid) {
   const key = `${m.id}|${hid}|${L}|${S.power}`;
   const sim = (power) => simulate(S, { ...m, power }, { level: L, ghost }, 120);
-  if (!tunedCache.has(key)) tunedCache.set(key, ghost && m.custom ? scaleDownFor(m, sim) : scaleForHunter(m, sim));
+  if (!tunedCache.has(key)) tunedCache.set(key, ghost && !m.boss && !m.training ? wannabeFloor(m, sim) : scaleForHunter(m, sim));
   return tunedCache.get(key);
 }
 async function hunt(m) {
@@ -1127,7 +1129,7 @@ function showResult(m, res, gain, close) {
   } else {
     box.innerHTML = `<div class="card"><div class="noCan">fled</div>
       <div><p class="eyebrow">Injured</p><h3>The ${esc(m.name)} got away</h3>
-      <p>${esc(current.name)} is hurt and can't hunt for ${dur(injuryHours(current) * 3600000)}${current.ghost ? ' (it\'s only a Wannabe: it bounces back fast)' : current.hired ? ' (a Chog you own heals in half the time)' : ' (owners heal twice as fast)'}, unless a healer patches it up for ${fmtChog(HEAL_COST)} test $CHOG. The loss goes into its journal as a scar; beat a ${esc(KIND_NAME[m.kind] || 'monster')} later to avenge it.</p>
+      <p>${esc(current.name)} is hurt and can't hunt for ${dur(injuryHours(current) * 3600000)}${current.ghost ? ' (a Chog you own is back in 1.5 h)' : current.hired ? ' (a Chog you own heals in half the time)' : ' (owners heal twice as fast)'}, unless a healer patches it up for ${fmtChog(HEAL_COST)} test $CHOG. The loss goes into its journal as a scar; beat a ${esc(KIND_NAME[m.kind] || 'monster')} later to avenge it.</p>
       <p class="lv">Next time guard (W) when it says HEAVY, or bring a ${weak} Chog.${current.ghost ? ' Or hire a real Chog below and keep hunting now.' : ''}</p>
       <div class="gains"><span>+${gain.xp} XP</span><span class="hurt">Injured · ${dur(injuryHours(current) * 3600000)}</span><span class="hurt">+1 scar</span>${gain.levelUp ? `<span class="up">Level ${gain.level}! · +8% health & damage</span>` : ''}</div>
       <button type="button" class="btn" id="done">Back to the board</button></div></div>`;
