@@ -989,7 +989,9 @@ html{overflow-x:clip} /* edge-to-edge bands use 100vw, which counts the scrollba
 @media (min-width:1200px){ header.top{margin-inline:calc(50% - 50vw); padding-inline:clamp(24px, 4vw, 72px)} }
 .wrap{position:relative; z-index:1}
 @media (min-width:1440px){ .side-deco{display:block} }
-body.tab-brick .side-deco, body.tab-room .side-deco{display:none} /* they sit beside the Hunt page's contracts; on the shorter tabs they only stretched the page */
+/* the Arcade and the Room are shorter pages: the same figures, packed into their content so the page doesn't grow */
+body.tab-brick .side-deco{top:140px; height:820px}
+body.tab-room .side-deco{top:140px; height:1120px}
 .side-deco img{position:absolute; width:clamp(70px, 6vw, 120px); opacity:.22; filter:brightness(0) drop-shadow(0 0 1px #a99bfc) drop-shadow(0 0 14px rgba(131,110,249,.7)); animation:sideFloat var(--t, 9s) ease-in-out var(--d, 0s) infinite}
 .side-deco img.r{filter:brightness(0) drop-shadow(0 0 1px #f39ad0) drop-shadow(0 0 14px rgba(232,69,164,.65))}
 .side-deco i{position:absolute; width:6px; height:6px; background:#a99bfc; box-shadow:0 0 10px #a99bfc; opacity:.5; animation:sideTwinkle 3.5s ease-in-out var(--d, 0s) infinite}
