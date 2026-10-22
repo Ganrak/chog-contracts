@@ -19,7 +19,8 @@ import { wannabeLine, SLOTS as ROOM_SLOTS, ITEMS as ROOM_ITEMS, PAINTS as ROOM_P
 import { readChog, walletChogs } from './chain.js';
 import { startGlow } from './glow.js';
 import { startGateLines } from './gatelines.js';import { play as sfx, sfxOn, setSfx } from './sfx.js';
-import { drawShareCard, shareHunt, saveCard, shareImage } from './share.js';
+import { drawShareCard, shareHunt, saveCard, shareImage, shareText, saveBlob } from './share.js';
+import { makeClip, canMakeClip } from './clip.js';
 import { musicOn, setMusic } from './music.js';
 import { startMotion as startTouches } from './motion.js';
 import { POOL, poolPrize } from './pool.js';
@@ -1008,6 +1009,13 @@ $('#compose').addEventListener('submit', (e) => {
   forge(text);
 });
 $('#post').addEventListener('input', previewFud);
+// the hero's forge: same thing, first thing you see (empty? one of the sample posts)
+$('#hero-forge').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const samples = [...$('#samples').querySelectorAll('button')].map((b) => b.textContent);
+  const text = $('#hero-post').value.trim() || samples[Math.floor(Math.random() * samples.length)];
+  $('#hero-post').value = ''; forge(text);
+});
 $('#samples').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) forge(b.textContent); });
 
 /* ---------- the hunt: turn-based, in the arena ---------- */
@@ -1071,7 +1079,7 @@ function showResult(m, res, gain, close) {
       <aside class="w-loot"><canvas id="reward-can" aria-label="${P.name} potion bottle labelled with ${esc(P.chog)}"></canvas><div><b>${P.name} potion</b><small>${P.effect}</small><small class="w-bag">In your bag · ×${loadBag()[m.reward]}</small></div></aside></div>
       <div class="share-pop" id="share-pop" hidden><div class="share-in">
         <p class="eyebrow">Your hunt card</p><img id="share-img" alt="Share card: ${esc(current.name)} hunted the ${esc(m.name)}">
-        <div class="acts"><button type="button" class="btn" id="share-go">Post on X</button><button type="button" class="btn ghost" id="share-save">Save image</button><button type="button" class="btn ghost" id="share-x">Close</button></div>
+        <div class="acts"><button type="button" class="btn" id="share-go">Post on X</button>${canMakeClip() ? '<button type="button" class="btn ghost" id="share-clip">Video clip</button>' : ''}<button type="button" class="btn ghost" id="share-save">Save image</button><button type="button" class="btn ghost" id="share-x">Close</button></div>
         <p class="lv" id="share-msg">Phone: the card goes straight into your post. Computer: it saves first, then drop it into the post that opens.</p>
       </div></div>`;
   } else {
@@ -1102,6 +1110,23 @@ function showResult(m, res, gain, close) {
       msg.textContent = r === 'saved' ? 'Card saved. Attach it to the post that just opened on X.' : r === 'shared' ? 'Shared. Nice hunt.' : r === 'cancelled' ? 'Cancelled.' : 'Post opened on X.';
     };
     $('#share-save').onclick = async () => { msg.textContent = (await saveCard(cv, card)) ? 'Card saved to your downloads.' : 'Could not save the card here.'; };
+    // an 8-second MP4 of the hunt, made right here: phones share it, computers save it and open a ready post
+    let clip = null;
+    if ($('#share-clip')) $('#share-clip').onclick = async (e) => {
+      const b = e.currentTarget; if (b.disabled) return; b.disabled = true; sfx('click');
+      try {
+        clip ||= await makeClip(card, (p) => { msg.textContent = `Making your clip… ${Math.round(p * 100)}%`; });
+        const name = `chog-hunt-${card.monsterName.toLowerCase().replace(/[^a-z]+/g, '-')}.mp4`, file = new File([clip], name, { type: 'video/mp4' });
+        if (navigator.canShare?.({ files: [file] }) && matchMedia('(pointer: coarse)').matches) {
+          try { await navigator.share({ files: [file], text: shareText(card) }); msg.textContent = 'Shared. Nice hunt.'; } catch (err) { msg.textContent = err.name === 'AbortError' ? 'Cancelled.' : 'Could not share it here.'; }
+        } else {
+          saveBlob(clip, name); sfx('coin');
+          window.open(`https://x.com/intent/post?text=${encodeURIComponent(shareText(card))}`, '_blank', 'noopener');
+          msg.textContent = 'Clip saved. Attach it to the post that just opened on X.';
+        }
+      } catch (err) { msg.textContent = err.message || 'Could not make the clip here.'; }
+      b.disabled = false;
+    };
     $('#share-x').onclick = () => { pop.hidden = true; $('#share').focus(); };  }
   $('#done').focus();
   $('#done').addEventListener('click', (e) => {

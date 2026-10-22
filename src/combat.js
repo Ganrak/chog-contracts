@@ -155,11 +155,17 @@ export function moves(f) {
   const w = W_MOVES[W.name] || W_MOVES['Dodge Roll'], e = E_MOVES[E.name] || E_MOVES['Cap Tip'], rk = R_KEY(R.name), r = R_MOVES[rk] || R_MOVES.Laser;
   const hit = (scale) => Math.round(f.me.atk * scale * rage(f));
   const qShort = { fire: ' + burn', aqua: ' + slow', volt: ' + chain', wild: ' + poison', shadow: ' + drain', holy: ' + heal', charm: ' + stun?', plain: '' }[f.element];
+  // which trait gave the move ("Head: MMGA Cap" → "MMGA Cap"), shown small under it so the NFT → move link is visible
+  const from = (a) => {
+    const [type, raw] = String(a.from || '').split(': '); if (!raw || raw === 'none') return '';
+    const v = raw.replace(/\b[a-z]/g, (ch) => ch.toUpperCase()); // metadata says "fire laser": show "Fire Laser"
+    return type === 'Class' ? `${v} class` : type === 'Eyes' && !/eye/i.test(v) ? `${v} eyes` : v;
+  };
   return [
-    { key: 'Q', name: Q.name, text: `Hit for ${hit(2.2)}. ${qExtra}`.trim(), short: `Hit ${hit(2.2)}${qShort}`, ready: true, el: el.color },
-    { key: 'W', name: W.name, text: w.text, short: SHORT[W.name] || 'Dodge 80%', ready: f.me.cd.W === 0, cd: f.me.cd.W },
-    { key: 'E', name: E.name, text: e.text, short: SHORT_HIT[E.name] ? `Hit ${hit(SHORT_HIT[E.name])}${SHORT[E.name] || ''}` : SHORT[E.name] || '+25% dmg', ready: f.me.cd.E === 0, cd: f.me.cd.E },
-    { key: 'R', name: R.name, text: r.text, short: SHORT_HIT[rk] ? `Hit ${hit(SHORT_HIT[rk])}${SHORT[rk] || ''}` : SHORT[rk] || 'Ultimate', ready: f.me.energy >= 3, need: 3 - f.me.energy, ult: true },
+    { key: 'Q', name: Q.name, text: `Hit for ${hit(2.2)}. ${qExtra}`.trim(), short: `Hit ${hit(2.2)}${qShort}`, ready: true, el: el.color, from: from(Q) },
+    { key: 'W', name: W.name, text: w.text, short: SHORT[W.name] || 'Dodge 80%', ready: f.me.cd.W === 0, cd: f.me.cd.W, from: from(W) },
+    { key: 'E', name: E.name, text: e.text, short: SHORT_HIT[E.name] ? `Hit ${hit(SHORT_HIT[E.name])}${SHORT[E.name] || ''}` : SHORT[E.name] || '+25% dmg', ready: f.me.cd.E === 0, cd: f.me.cd.E, from: from(E) },
+    { key: 'R', name: R.name, text: r.text, short: SHORT_HIT[rk] ? `Hit ${hit(SHORT_HIT[rk])}${SHORT[rk] || ''}` : SHORT[rk] || 'Ultimate', ready: f.me.energy >= 3, need: 3 - f.me.energy, ult: true, from: from(R) },
   ];
 }
 // the big one-line label on each move button (the full text stays as its tooltip)

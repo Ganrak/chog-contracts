@@ -163,9 +163,9 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
     $('#bag').innerHTML = POTIONS.map((P, i) => `<button type="button" class="pot" data-pot="${i}" style="--pc:${P.color}" title="${P.name} potion: ${P.effect}" aria-label="Drink a ${P.name} potion (${bag[i]} left): ${P.effect}" ${bag[i] > 0 && !f.quaffed && !busy && !f.over && !auto ? '' : 'disabled'}>${ico(POTION_ICON[i], 'pi')}<b>${bag[i]}</b></button>`).join('')
       + `<small>${f.quaffed ? 'Potion used' : bag.some((n) => n > 0) ? '1 potion per fight · free' : 'No potions yet: win contracts'}</small>`;
     // each button: a big icon, the move's name, and one short line (what it does, or when it is ready); the full text is the tooltip
-    $('#moves').innerHTML = moves(f).map((m) => `<button type="button" class="move${m.ult ? ' ult' : ''}" data-key="${m.key}" title="${esc(m.text)}" aria-label="${esc(`${m.key}: ${m.name}. ${m.text}`)}" ${m.ready && !busy && !f.over && !auto ? '' : 'disabled'} style="--mcol:${m.el || hc}">
+    $('#moves').innerHTML = moves(f).map((m) => `<button type="button" class="move${m.ult ? ' ult' : ''}" data-key="${m.key}" title="${esc(m.text + (m.from ? ` (from ${m.from})` : ''))}" aria-label="${esc(`${m.key}: ${m.name}. ${m.text}${m.from ? ` From its ${m.from}.` : ''}`)}" ${m.ready && !busy && !f.over && !auto ? '' : 'disabled'} style="--mcol:${m.el || hc}">
       <span class="k">${m.key}</span>${ico(moveIcon(m), 'mv')}<div class="mv-t"><b>${esc(m.name)}</b>
-      <strong${m.ready ? '' : ' class="wait"'}>${esc(m.ready ? m.short : m.ult ? `${m.need} more energy` : `Ready in ${m.cd}`)}</strong></div></button>`).join('');
+      <strong${m.ready ? '' : ' class="wait"'}>${esc(m.ready ? m.short : m.ult ? `${m.need} more energy` : `Ready in ${m.cd}`)}</strong>${m.from ? `<i class="mv-from">from ${esc(m.from)}</i>` : ''}</div></button>`).join('');
   }
 
   function coachMoment() {
