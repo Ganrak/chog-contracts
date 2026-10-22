@@ -1106,11 +1106,12 @@ body:has(.hunt:not([hidden])) .dock button::before{bottom:auto; top:calc(100% + 
 .hero-hook button + button{color:#ffd66b; text-decoration-color:rgba(255,214,107,.55)}
 .hero-hook button:hover{text-decoration-color:currentColor}
 /* the FUD Forge, right in the hero: paste a post and its monster lands on the contract board */
-.hero-forge{display:flex; gap:8px; margin-top:20px; max-width:520px; padding:6px; border-radius:16px; border:1px solid rgba(232,69,164,.55); background:rgba(14,11,26,.7); box-shadow:0 0 0 4px rgba(232,69,164,.08), 0 10px 30px rgba(0,0,0,.35)}
+.hero-side{min-width:0}
+.hero-forge{display:flex; gap:8px; margin-top:14px; padding:6px; border-radius:16px; border:1px solid rgba(232,69,164,.55); background:rgba(14,11,26,.7); box-shadow:0 0 0 4px rgba(232,69,164,.08), 0 10px 30px rgba(0,0,0,.35)}
 .hero-forge input{flex:1; min-width:0; border:0; background:none; color:var(--fg); font:15px var(--body); padding:10px 12px}
 .hero-forge input:focus{outline:none} .hero-forge:focus-within{border-color:#e845a4; box-shadow:0 0 0 4px rgba(232,69,164,.2), 0 10px 30px rgba(0,0,0,.35)}
 .hero-forge .btn{flex:none; white-space:nowrap}
-.hero-free{margin:10px 0 0; font:600 12px/1.3 var(--mono); letter-spacing:.06em; color:#8af0b0}
+.hero-free{margin:16px 0 0; font:600 12px/1.3 var(--mono); letter-spacing:.06em; color:#8af0b0}
 @media (max-width:520px){ .hero-forge{flex-direction:column} .hero-forge .btn{width:100%} }
 @media (prefers-reduced-motion:no-preference){ .hero .hero-forge, .hero .hero-free{animation:heroIn .7s ease .45s both} html:not(.entered) :is(.hero .hero-forge, .hero .hero-free){animation-play-state:paused} html.intro-seen :is(.hero .hero-forge, .hero .hero-free){animation:none} }
 .hunter .feats{margin:0; font-size:13px; line-height:1.5; color:var(--muted)} .hunter .feats b{color:var(--fg); font-weight:700}
@@ -1608,17 +1609,20 @@ body.unbox .tr-card{background:rgba(255,255,255,.025)}
       <p class="eyebrow">Chogathon 2026 · playable demo</p>
       <h1 id="hero-title">FUD is a monster.<span>Your Chog hunts it.</span></h1>
       <p class="lede">Someone on X says Monad is dead. Now it's a monster. Send your Chog.</p>
-      <form class="hero-forge" id="hero-forge" autocomplete="off">
-        <input id="hero-post" maxlength="280" placeholder="Paste any FUD post…" aria-label="A FUD post to turn into a monster">
-        <button type="submit" class="btn">Make it a monster</button>
-      </form>
       <p class="hero-free">Free to play · no wallet needed · nothing to sign</p>
       <p class="hero-hook"><button type="button" data-hook="hire">No Chog? Hire one.</button><button type="button" data-hook="earn">Have one? It earns for you.</button></p>
       <div class="lineup" aria-hidden="true"><img src="assets/monsters/ghoul.png" alt=""><img src="assets/monsters/thief.png" alt=""><img src="assets/monsters/troll.png" alt=""><img src="assets/monsters/wyrm.png" alt="" class="big"><img src="assets/monsters/golem.png" alt=""><img src="assets/monsters/harpy.png" alt=""><img src="assets/monsters/wraith.png" alt=""></div>
     </div>
-    <div class="stage" id="stage">
-      <div class="h-scene" id="hero-scene" role="region" aria-label="A FUD post turning into a monster, and a Chog stepping in to hunt it"></div>
-      <div class="cap"><span>FUD in · monster out</span><span>Hover to hold</span></div>
+    <div class="hero-side">
+      <div class="stage" id="stage">
+        <div class="h-scene" id="hero-scene" role="region" aria-label="A FUD post turning into a monster, and a Chog stepping in to hunt it"></div>
+        <div class="cap"><span>FUD in · monster out</span><span>Hover to hold</span></div>
+      </div>
+      <!-- right under the show: do it yourself -->
+      <form class="hero-forge" id="hero-forge" autocomplete="off">
+        <input id="hero-post" maxlength="280" placeholder="Paste any FUD post…" aria-label="A FUD post to turn into a monster">
+        <button type="submit" class="btn">Make it a monster</button>
+      </form>
     </div>
   </section>
 
