@@ -220,6 +220,7 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
       fl.style.left = `${p.x}px`; fl.style.top = `${p.y}px`; fx.appendChild(fl); setTimeout(() => fl.remove(), 750);
     }
     await Promise.all(pts.map((p) => ray(null, to, color, p, 15)));
+    painted(to, 'laser', color, true, 650); // where the beams land: the painted laser flare
   }
   async function ray(from, to, color, origin, thick) {
     if (reduce()) return;
@@ -238,31 +239,23 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
 
   /* ---------- hit effects: sparks in the element's style, impact rings, slashes, flashes ---------- */
   const HIT_FX = {
-    fire: { cls: 'flame', up: 70, grav: -50, sig: 'fire' }, aqua: { cls: 'drop', up: 40, grav: 120 }, volt: { cls: 'spark', sig: 'bolt' },
-    wild: { cls: 'leaf', grav: 70 }, shadow: { cls: 'smoke', size: [16, 30], spread: 70, sig: 'void' }, holy: { cls: 'star', up: 70, grav: -40, size: [9, 15], sig: 'pillar' },
-    charm: { cls: 'heart', up: 60, grav: -30, size: [10, 18], sig: 'heart' }, plain: { cls: 'spark', sig: 'pow' },
+    fire: { cls: 'flame', up: 70, grav: -50, sig: 'fire' }, aqua: { cls: 'drop', up: 40, grav: 120, sig: 'aqua' }, volt: { cls: 'spark', sig: 'volt' },
+    wild: { cls: 'leaf', grav: 70, sig: 'wild' }, shadow: { cls: 'smoke', size: [16, 30], spread: 70, sig: 'shadow' }, holy: { cls: 'star', up: 70, grav: -40, size: [9, 15], sig: 'holy' },
+    charm: { cls: 'heart', up: 60, grav: -30, size: [10, 18], sig: 'heart' }, plain: { cls: 'spark', sig: 'paintpow' },
   };
-  let uid = 0; // unique ids for the SVG gradients and clips below
-  // each element's signature on impact, drawn with the same care as the volt bolt
+  // painted hit effects (assets/fx/hit-*.png, cut from one sheet): each pops on the monster in its own way
+  function painted(node, name, color, big, ms = 820) {
+    const p = fxEl(`pfx pfx-${name}${big ? ' big' : ''}`, node, color, ms); if (p) p.innerHTML = `<img src="assets/fx/hit-${name}.png" alt="">`;
+    return p;
+  }
+  // each element's signature on impact
   const SIG = {
-    bolt(node, color) { const b = fxEl('bolt', node, color, 440); if (b) b.innerHTML = '<svg viewBox="0 0 60 120" aria-hidden="true"><path d="M34 0 12 56h18L18 120l32-70H32L46 0Z"/></svg>'; },
-    // shadow: a dark vortex opens on the monster and tendrils lash out of it
-    void(node, color) {
-      const v = fxEl('void', node, color, 900); if (!v) return;
-      const arms = Array.from({ length: 6 }, (_, i) => {
-        const a = (i / 6) * Math.PI * 2 + Math.random() * 0.5, r = 82 + Math.random() * 14, bend = (Math.random() < 0.5 ? -1 : 1) * 0.9;
-        const ex = Math.cos(a) * r, ey = Math.sin(a) * r, mx = Math.cos(a + bend) * r * 0.55, my = Math.sin(a + bend) * r * 0.55;
-        return `<path d="M0 0Q${mx.toFixed(1)} ${my.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}" pathLength="100" style="animation-delay:${(i * 0.03).toFixed(2)}s"/>`;
-      }).join('');
-      v.innerHTML = `<i></i><svg viewBox="-100 -100 200 200" aria-hidden="true">${arms}</svg>`;
-    },
-    // holy: a pillar of light drops from the sky onto the monster, with a halo where it lands
-    pillar(node, color) {
-      const c = center(node), p = fxEl('pillar', node, color, 800, { x: c.x, y: 0 }); if (!p) return;
-      p.style.height = `${c.y + c.h * 0.42}px`;
-      fxEl('halo', node, color, 800, { x: c.x, y: c.y + c.h * 0.42 });
-      const g = fxEl('glint', node, color, 700); if (g) g.innerHTML = '<svg viewBox="-50 -50 100 100" aria-hidden="true"><path d="M0-50 7-7 50 0 7 7 0 50-7 7-50 0-7-7Z"/></svg>';
-    },
+    // the painted ones: water bursts up, vines whip out, lightning strikes down, a vortex spins, light falls
+    aqua(node, color, big) { painted(node, "aqua", color, big); },
+    wild(node, color, big) { painted(node, "wild", color, big); },
+    volt(node, color, big) { painted(node, "volt", color, big, 620); },
+    shadow(node, color, big) { painted(node, "shadow", color, big, 950); },
+    holy(node, color, big) { painted(node, "holy", color, big, 900); },
     // fire: a fireball bursts on the monster and flames lick up its body
     fire(node, color, big) {
       const fb = fxEl(`fireboom${big ? ' big' : ''}`, node, color, 800); if (fb) fb.innerHTML = '<img src="assets/fx/fireball.png" alt="">';
@@ -273,12 +266,11 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
       const h = fxEl('heartfx', node, color, 1000); if (!h) return;
       h.innerHTML = '<img class="hfull" src="assets/fx/heart.webp" alt=""><img class="hl" src="assets/fx/heartbroken.webp" alt=""><img class="hr" src="assets/fx/heartbroken.webp" alt="">';
     },
-    // plain: a comic-book starburst
-    pow(node, color, big) {
-      const p = fxEl('pow', node, color, 700); if (!p) return;
-      const pts = Array.from({ length: 24 }, (_, i) => { const a = (i / 24) * Math.PI * 2, r = i % 2 ? 26 + Math.random() * 6 : 46 + Math.random() * 6; return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`; }).join(' ');
-      const word = big ? 'WHAM!' : ['POW!', 'BAM!', 'BONK!', 'SMACK!'][Math.floor(Math.random() * 4)];
-      p.innerHTML = `<svg viewBox="-55 -55 110 110" aria-hidden="true"><polygon points="${pts}"/><text y="7">${word}</text></svg>`;
+    // plain: the painted comic starburst with a word on it
+    paintpow(node, color, big) {
+      const p = painted(node, "pow", color, big, 720); if (!p) return;
+      const word = big ? "WHAM!" : ["POW!", "BAM!", "BONK!", "SMACK!"][Math.floor(Math.random() * 4)];
+      p.insertAdjacentHTML("beforeend", `<b>${word}</b>`);
     },
   };
   // a shield-shaped barrier in front of your Chog: rises when you shield or guard, cracks when it soaks a hit
@@ -423,6 +415,7 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
           else { const k = TICK_FX[e.tag]; if (k) burst(foeA, { n: 6, color: k.color, cls: k.cls, up: k.up || 0, grav: k.grav || 0, spread: 60, size: [6, 11] }); }
         }
         else impact(foeA, e.el, c, big || e.tag === 'WEAK SPOT');
+        if (e.tag === 'CRIT' || e.tag === 'EXECUTE') painted(foeA, 'crit', '#ffd66b', true, 700); // a crit: the white-gold cross flash on top
         pop(foeA, `-${e.n}`, e.counter && !e.tag ? 'COUNTER' : e.tag, e.tag === 'WEAK SPOT' || e.tag === 'CRIT' || e.tag === 'EXECUTE' ? c : '#fff', e.tick, big);
         if (big) { buzz(25); await wait(90); } // a beat of hit-stop so the big ones land
         await wait(e.tick ? 420 : 380); arena.classList.remove('quake');

@@ -11,7 +11,7 @@ while ($l.IsListening) {
     # dev helper: POST /__snap?name=x.png stores a canvas capture in $env:SNAP_DIR (if set)
     if ($c.Request.HttpMethod -eq 'POST' -and $p -eq '__snap' -and $env:SNAP_DIR) {
       $name = [IO.Path]::GetFileName($c.Request.QueryString['name'])
-      if ($name -match '^[\w.-]+\.(png|mp4)$') {
+      if ($name -match '^[\w.-]+\.(png|mp4|webp)$') {
         $fs = [IO.File]::Create((Join-Path $env:SNAP_DIR $name)); $c.Request.InputStream.CopyTo($fs); $fs.Close()
       } else { $c.Response.StatusCode = 403 }
       continue
