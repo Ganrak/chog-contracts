@@ -75,4 +75,5 @@ export default async (req) => {
   await store.set(`tx/${tx}`, wallet);
   try { return json({ pass: makePass(wallet), week: weekId() }); } catch (err) { return json({ error: err.message }, 500); }
 };
-export const config = { path: '/api/self-verify' };
+// each check asks Monad for a transaction and its trace: at most 15 a minute per visitor (Netlify answers 429 above that)
+export const config = { path: '/api/self-verify', rateLimit: { windowLimit: 15, windowSize: 60, aggregateBy: ['ip', 'domain'] } };

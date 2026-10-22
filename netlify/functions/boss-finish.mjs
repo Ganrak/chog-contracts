@@ -55,4 +55,5 @@ export default async (req) => {
   await store.setJSON('feed', feed.slice(0, 20)).catch(() => {});
   return json({ dmg: r.dmg, win: r.win, total: entry.dmg, best: entry.best });
 };
-export const config = { path: '/api/boss-finish' };
+// a hunt takes minutes to play: 20 finishes a minute per visitor is far above a person and stops a flood (429 above it)
+export const config = { path: '/api/boss-finish', rateLimit: { windowLimit: 20, windowSize: 60, aggregateBy: ['ip', 'domain'] } };
