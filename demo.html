@@ -988,10 +988,12 @@ html{overflow-x:clip} /* edge-to-edge bands use 100vw, which counts the scrollba
 /* the header reaches toward the screen edges: logo left, account right */
 @media (min-width:1200px){ header.top{margin-inline:calc(50% - 50vw); padding-inline:clamp(24px, 4vw, 72px)} }
 .wrap{position:relative; z-index:1}
-@media (min-width:1440px){ .side-deco{display:block} }
+@media (min-width:1280px){ .side-deco{display:block} }
+/* 1280-1439px (laptops, scaled screens): the side margins are narrow, so smaller figures sit in the middle of them */
+@media (min-width:1280px) and (max-width:1439px){ .side-deco img, .side-deco span{width:56px !important} .side-deco :is(img, span):not(.r){left:calc((100vw - 1120px) / 4 - 28px) !important} .side-deco :is(img, span).r{right:calc((100vw - 1120px) / 4 - 28px) !important} }
 /* one set per page: monsters on Hunt, arcade things in the Arcade, the room's own items in the Room.
    The Arcade and the Room are shorter: their sets are packed into the content so the page doesn't grow */
-@media (min-width:1440px){
+@media (min-width:1280px){
   .side-deco.for-brick, .side-deco.for-room, body.tab-brick .side-deco.for-hunt, body.tab-room .side-deco.for-hunt{display:none}
   body.tab-brick .side-deco.for-brick, body.tab-room .side-deco.for-room{display:block}
 }
