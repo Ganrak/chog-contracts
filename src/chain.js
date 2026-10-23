@@ -78,6 +78,15 @@ export async function chogBalanceOf(wallet) {
   return Number(BigInt(r.result));
 }
 
+/** An ERC-20 balance (e.g. $CHOG) in whole tokens, read with one eth_call. Read-only. */
+export async function tokenBalanceOf(token, wallet, decimals = 18) {
+  await slot(1);
+  const res = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: token, data: SEL.balanceOf + word(BigInt(wallet)) }, 'latest'] }) });
+  const j = await res.json(); if (j.error || !j.result) throw new Error(j.error?.message || 'balanceOf failed');
+  return Number(BigInt(j.result) / 10n ** BigInt(decimals));
+}
+
 /**
  * A wallet's Chogs. Fast path: candidates from the snapshot, confirmed on-chain in one request.
  * The live balance is checked too, so a Chog bought or moved after the snapshot still shows up:

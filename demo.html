@@ -1582,6 +1582,18 @@ body.tab-room .wrap > section:not(#room){display:none}
 .badge small{font-size:11px; line-height:1.3; color:var(--muted)}
 .badge.got{opacity:1; border:1px solid color-mix(in srgb, var(--c, #a99bfc) 60%, transparent); background:color-mix(in srgb, var(--c, #a99bfc) 14%, transparent)}
 .badge.got small{color:#8af0b0; font:600 10.5px/1.3 var(--mono); letter-spacing:.06em; text-transform:uppercase}
+/* the badge wall folds away under its title; the $CHOG holder chip sits beside it */
+.badge-fold > summary{display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none}
+.badge-fold > summary::-webkit-details-marker{display:none}
+.badge-fold > summary .j-h{margin:0}
+.badge-fold > summary > i{margin-left:auto; width:9px; height:9px; border-right:2px solid var(--muted); border-bottom:2px solid var(--muted); transform:rotate(45deg); transition:transform .2s}
+.badge-fold[open] > summary > i{transform:rotate(-135deg)}
+.badge-fold[open] > .badges{margin-top:10px}
+.holder{padding:4px 9px; border-radius:999px; font:700 10.5px/1 var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border:1px dashed rgba(255,214,107,.35); opacity:.7}
+.holder.on{opacity:1; color:#1b1230; border:0; background:linear-gradient(90deg, #ffd66b, #ffb020); box-shadow:0 0 14px rgba(255,214,107,.5)}
+/* the hunt-log side of the profile: a faint pattern of curves so the empty space isn't flat */
+.prof .j-card + .j-card{background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' fill='none' stroke='%23a99bfc' stroke-width='2' stroke-linecap='round' opacity='.09'%3E%3Cpath d='M20 40c40-20 70 10 110 0'/%3E%3Cpath d='M170 30c10 20 0 40 15 55'/%3E%3Cpath d='M30 120c20-25 50-30 70-50'/%3E%3Cpath d='M140 140c20 10 35 30 30 60'/%3E%3Cpath d='M40 190c25 15 50 20 75 40'/%3E%3Cpath d='M200 120c-5 15 5 30 25 35'/%3E%3C/svg%3E") 0 0 / 240px 240px repeat}
 .drunk span{display:inline-flex; align-items:center; gap:6px; font:700 12px/1 var(--mono); padding:8px 10px; border-radius:9px; background:var(--night-3)}
 .drunk span i{width:9px; height:14px; border-radius:3px; background:var(--c)}
 .j-log{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; max-height:460px; overflow:auto}

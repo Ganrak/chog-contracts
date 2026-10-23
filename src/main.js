@@ -16,7 +16,7 @@ import { PLACES as TRIP_PLACES, TRIPS as TRIP_LENGTHS, SNACKS as TRIP_SNACKS, fa
 import { tripMapSvg } from './tripmap.js';
 import { rentalLog, demoOwnerStats, loadPaid, savePaid } from './rental.js';
 import { wannabeLine, SLOTS as ROOM_SLOTS, ITEMS as ROOM_ITEMS, PAINTS as ROOM_PAINTS, COLORS as ROOM_COLORS, loadRoom, saveRoom, owns, fits } from './room.js';
-import { readChog, walletChogs } from './chain.js';
+import { readChog, walletChogs, tokenBalanceOf } from './chain.js';
 import { startGlow } from './glow.js';
 import { startGateLines } from './gatelines.js';import { play as sfx, sfxOn, setSfx } from './sfx.js';
 import { drawShareCard, shareHunt, saveCard, shareImage, shareText, saveBlob } from './share.js';
@@ -440,7 +440,7 @@ const when = (t) => new Date(t).toLocaleString('en', { month: 'short', day: 'num
 /* the journal lives in a profile window: tap a selected hunter card (or its ⓘ) to open it */
 let profH = null;
 function openProfile(h) { if ($('#prof').parentNode !== document.body) document.body.append($('#prof')); // fixed overlay must not sit inside an animated tab
-  profH = h; journalAll = false; renderJournal(); $('#prof').hidden = false; document.body.style.overflow = 'hidden'; sfx('click'); $('#prof-x').focus(); }
+  profH = h; journalAll = false; renderJournal(); checkHolder(); $('#prof').hidden = false; document.body.style.overflow = 'hidden'; sfx('click'); $('#prof-x').focus(); }
 function closeProfile() { if ($('#prof').hidden) return; $('#prof').hidden = true; profH = null; document.body.style.overflow = ''; }
 function profStatus(h, p) {
   if (p.trip) return tripBack(p.trip) ? ['ok', 'Back from its trip'] : ['away', 'Away on an expedition'];
@@ -473,11 +473,25 @@ const BADGES = [
   ['Explorer', 'Come back from 5 expeditions', (p, hunts, trips) => trips.length >= 5],
   ['Veteran', 'Reach level 5', (p) => p.level >= 5],
 ];
-function badgesHtml(p, log) {
+// the $CHOG holder badge: the connected wallet holds 10,000+ $CHOG (read from Monad, never a transaction)
+const HOLDER_MIN = 10000;
+let held = { wallet: null, amount: null };
+async function checkHolder() {
+  const w = (wAddr || '').toLowerCase(); if (!w || held.wallet === w) return;
+  held = { wallet: w, amount: null };
+  try { held.amount = await tokenBalanceOf(POOL.token, w, POOL.decimals); } catch { held.amount = null; }
+  if (!$('#prof').hidden) renderJournal();
+}
+let badgesOpen = false; // the badge wall folds away; it remembers being open while the page is up
+document.addEventListener('toggle', (e) => { if (e.target.matches?.('[data-badges]')) badgesOpen = e.target.open; }, true);
+function badgesHtml(p, log, h) {
   const hunts = log.filter((e) => !e.trip), trips = log.filter((e) => e.trip);
   const got = BADGES.map(([, , test]) => !!test(p, hunts, trips));
-  return `<div><p class="j-h">Badges · ${got.filter(Boolean).length}/${BADGES.length}</p></div>
-    <div class="badges">${BADGES.map(([name, how], i) => `<span class="badge${got[i] ? ' got' : ''}" title="${esc(how)}"><b>${esc(name)}</b><small>${got[i] ? 'Earned' : esc(how)}</small></span>`).join('')}</div>`;
+  const mine = !!wAddr && held.wallet === wAddr.toLowerCase() && !h.ghost && isOwned(h);
+  const holder = mine && held.amount >= HOLDER_MIN;
+  const chip = `<span class="holder${holder ? ' on' : ''}" title="${holder ? `This wallet holds ${fmtChog(held.amount)} $CHOG` : 'Hold 10,000+ $CHOG in the connected wallet'}">$CHOG Holder${holder ? '' : ' · 10k'}</span>`;
+  return `<details class="badge-fold" data-badges${badgesOpen ? ' open' : ''}><summary><span class="j-h">Badges · ${got.filter(Boolean).length}/${BADGES.length}</span>${chip}<i aria-hidden="true"></i></summary>
+    <div class="badges">${BADGES.map(([name, how], i) => `<span class="badge${got[i] ? ' got' : ''}" title="${esc(how)}"><b>${esc(name)}</b><small>${got[i] ? 'Earned' : esc(how)}</small></span>`).join('')}</div></details>`;
 }
 function renderJournal() {
   if ($('#prof').hidden && !profH) return;
@@ -503,7 +517,7 @@ function renderJournal() {
       <div><p class="j-h">Trophy wall</p></div>
       <div class="trophies">${Object.keys(KIND_NAME).map((kind) => { const n = p.trophies[kind] || 0;
         return `<div class="trophy${n ? ' got' : ''}" style="--c:${MON_COLOR[kind]}" title="${KIND_NAME[kind]}${n ? ` ×${n}` : ': not hunted yet'}"><img src="assets/monsters/${kind}.png" alt="${KIND_NAME[kind]}${n ? `, hunted ${n} times` : ', not hunted yet'}">${n ? `<i>×${n}</i>` : ''}</div>`; }).join('')}</div>
-      ${badgesHtml(p, log)}
+      ${badgesHtml(p, log, h)}
       <div><p class="j-h">Potions drunk in fights</p></div>
       <div class="drunk">${POTIONS.map((P, i) => `<span style="--c:${P.color}"><i></i>${P.name} ×${drunk[i]}</span>`).join('')}</div>
       <p class="j-note">${esc(note)}</p>
