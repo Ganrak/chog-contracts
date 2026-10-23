@@ -56,7 +56,7 @@ export function tripMapSvg({ t, place, h, places, now = Date.now(), night = true
     <image href="assets/map/map-${night ? 'night' : 'day'}.webp" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="none"/>
     ${dots.map(([x, y, on]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${on ? 7 : 5.5}" fill="${on ? '#e845a4' : 'rgba(255,255,255,.75)'}" stroke="rgba(20,12,30,.6)" stroke-width="2"${on ? ' filter="drop-shadow(0 0 5px rgba(232,69,164,.9))"' : ''}/>`).join('')}
     <circle cx="${px}" cy="${py}" r="70" fill="none" stroke="#e845a4" stroke-width="4" opacity=".7"><animate attributeName="r" values="60;78;60" dur="2.4s" repeatCount="indefinite"/></circle>
-    ${place.kind ? `<image href="assets/monsters/${place.kind}.png" x="${px - 150}" y="${py - 120}" width="100" height="100"/>` : ''}
+    ${place.kind ? `<image href="assets/monsters/${place.kind}.webp" x="${px - 150}" y="${py - 120}" width="100" height="100"/>` : ''}
     ${Object.entries(SPOTS).map(([id, s]) => label(s.label[0], s.label[1], places.find((x) => x.id === id)?.name || id, id === t.place)).join('')}
     ${label(LODGE[0], 935, 'The Lodge', false)}
     ${pins.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="${p.seen ? 12 : 8}" fill="${p.seen ? '#ffd66b' : 'rgba(255,255,255,.35)'}" stroke="#1a1226" stroke-width="3"><title>${p.seen ? esc(p.text) : 'A diary page, coming up'}</title></circle>`).join('')}

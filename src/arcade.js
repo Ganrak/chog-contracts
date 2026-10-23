@@ -49,7 +49,7 @@ export function startArcade(stage, { onPick } = {}) {
   // what's on the screens
   let chog = null, pix = null, t = 0;
   const off = document.createElement('canvas'); off.width = off.height = 22;
-  const kid = new Image(); kid.src = 'assets/chogs/apprentice.png';
+  const kid = new Image(); kid.src = 'assets/chogs/apprentice.webp';
   const blocks = [], stack = Array(8).fill(0);
   function drawStudio({ c }) {
     c.fillStyle = '#120c1e'; c.fillRect(0, 0, 160, 120);

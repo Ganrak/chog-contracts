@@ -14,7 +14,7 @@ export function startRunner(canvas, { onState } = {}) {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const A = {}; // art
   const ready = Promise.all([
-    load('assets/chogs/apprentice.png'), ...['ghoul', 'troll', 'thief', 'golem', 'harpy', 'wraith'].map((k) => load(`assets/monsters/${k}.png`)),
+    load('assets/chogs/apprentice.webp'), ...['ghoul', 'troll', 'thief', 'golem', 'harpy', 'wraith'].map((k) => load(`assets/monsters/${k}.webp`)),
   ]).then(([kid, ghoul, troll, thief, golem, harpy, wraith]) => Object.assign(A, { kid, ghoul, troll, thief, golem, harpy, wraith }));
   const BEST_KEY = 'chog-contracts-run-best';
   let best = (() => { try { return Number(localStorage.getItem(BEST_KEY)) || 0; } catch { return 0; } })();

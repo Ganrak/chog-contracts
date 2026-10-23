@@ -47,10 +47,10 @@ const HUNTERS = [
   { id: 'ghost', token: null, name: 'Wannabe Chog', ghost: true, traits: randomTraits(seeded(`ghost-${new Date().toISOString().slice(0, 10)}`)) },
 ];
 // players without an NFT all hunt as the Apprentice (a kid in a homemade cardboard Chog mask); holders hunt as their own NFT
-const SPRITE = '<img class="pix" src="assets/chogs/apprentice.png" alt="The Wannabe Chog: a kid in a homemade paper-bag Chog mask">';
-const APPR_FACE = '<img class="pix" src="assets/chogs/apprentice-face.png" alt="">';
+const SPRITE = '<img class="pix" src="assets/chogs/apprentice.webp" alt="The Wannabe Chog: a kid in a homemade paper-bag Chog mask">';
+const APPR_FACE = '<img class="pix" src="assets/chogs/apprentice-face.webp" alt="">';
 // in the arena the Apprentice is animated: an attack strip and a poses strip (idle, cheer, hit, defeated), 4 frames each
-const APPR_ARENA = '<div class="strip appr-strip posing" style="aspect-ratio:480/512"><img class="atk" src="assets/chogs/apprentice-attack.png" alt=""><img class="pose" src="assets/chogs/apprentice-poses.png" alt="The Wannabe Chog"></div>';
+const APPR_ARENA = '<div class="strip appr-strip posing" style="aspect-ratio:480/512"><img class="atk" src="assets/chogs/apprentice-attack.webp" alt=""><img class="pose" src="assets/chogs/apprentice-poses.webp" alt="The Wannabe Chog"></div>';
 const art = (h) => (h.ghost ? SPRITE : `<img src="${img(h.img)}" alt="${esc(h.name)}, token ${esc(h.token)}">`);
 
 /* ---------- monsters, drawn by hand ---------- */
@@ -61,8 +61,8 @@ const STRIP_H = { ghoul: 248, troll: 227, thief: 218, golem: 230, harpy: 213, wy
 const STRIP_FLIP = new Set(['wyrm']); // the wyrm breathes to the right in the sheet
 const monsterArt = (kind, inArena = false) => {
   const k = kind in MON_COLOR ? kind : 'wraith';
-  if (!inArena) return `<img class="mon" src="assets/monsters/${k}.png" alt="">`;
-  return `<div class="strip${STRIP_FLIP.has(k) ? ' flip' : ''}" style="aspect-ratio:300/${STRIP_H[k]}"><img src="assets/monsters/attack/${k}.png" alt=""></div>`;
+  if (!inArena) return `<img class="mon" src="assets/monsters/${k}.webp" alt="">`;
+  return `<div class="strip${STRIP_FLIP.has(k) ? ' flip' : ''}" style="aspect-ratio:300/${STRIP_H[k]}"><img src="assets/monsters/attack/${k}.webp" alt=""></div>`;
 };
 
 /* ---------- Chogs brought from Monad (kept in this browser) ----------
@@ -518,7 +518,7 @@ function renderJournal() {
       </div>
       <div><p class="j-h">Trophy wall</p></div>
       <div class="trophies">${Object.keys(KIND_NAME).map((kind) => { const n = p.trophies[kind] || 0;
-        return `<div class="trophy${n ? ' got' : ''}" style="--c:${MON_COLOR[kind]}" title="${KIND_NAME[kind]}${n ? ` ×${n}` : ': not hunted yet'}"><img src="assets/monsters/${kind}.png" alt="${KIND_NAME[kind]}${n ? `, hunted ${n} times` : ', not hunted yet'}">${n ? `<i>×${n}</i>` : ''}</div>`; }).join('')}</div>
+        return `<div class="trophy${n ? ' got' : ''}" style="--c:${MON_COLOR[kind]}" title="${KIND_NAME[kind]}${n ? ` ×${n}` : ': not hunted yet'}"><img src="assets/monsters/${kind}.webp" alt="${KIND_NAME[kind]}${n ? `, hunted ${n} times` : ', not hunted yet'}">${n ? `<i>×${n}</i>` : ''}</div>`; }).join('')}</div>
       ${badgesHtml(p, log, h)}
       <div><p class="j-h">Potions drunk in fights</p></div>
       <div class="drunk">${POTIONS.map((P, i) => `<span style="--c:${P.color}"><i></i>${P.name} ×${drunk[i]}</span>`).join('')}</div>
@@ -528,7 +528,7 @@ function renderJournal() {
       ${profRent(h)}
       <p class="j-h">Hunt log</p>
       ${log.length ? `<ol class="j-log">${log.slice(0, journalAll ? log.length : 4).map((e) => `<li class="${e.win ? '' : `lost${e.avenged ? ' avenged' : ''}`}${e.trip ? ' trip' : ''}">
-          <img src="assets/monsters/${e.kind in KIND_NAME ? e.kind : 'wraith'}.png" alt="">
+          <img src="assets/monsters/${e.kind in KIND_NAME ? e.kind : 'wraith'}.webp" alt="">
           <div><b>${e.trip ? `Back from ${esc(e.name)}` : `${e.win ? 'Hunted' : 'Lost to'} the ${esc(e.name)}`}</b>${e.trip ? (e.win ? ' <span class="scar ok">Expedition</span>' : ' <span class="scar">Came back hurt</span>') : e.win ? ` in ${e.turns} turns` : e.avenged ? ' <span class="scar ok">Scar · avenged</span>' : ' <span class="scar">Scar</span>'}
           <q>${esc(e.quote)}</q>
           <small>${when(e.at)}${e.forged ? ' · forged from a post' : ''}${e.boss ? ' · shared boss' : ''}${e.hired ? ' · hired' : ''}${e.prev ? ' · previous owner' : ''}${e.potion != null ? ` · ${POTIONS[e.potion].name} potion` : ''}${e.chog ? ` · ${fmtChog(e.chog)} test $CHOG` : ''}</small></div></li>`).join('')}</ol>${log.length > 4 ? `<button type="button" class="h-own" data-jall>${journalAll ? 'Show the latest 4' : `Show all ${log.length} hunts`}</button>` : ''}`
@@ -575,8 +575,8 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#snap').hidde
 async function shareStory(h) {
   const p = prog(h), k = hunterStats(h, p).kit, E = k.elementInfo, log = p.log || [];
   const W = 1200, H = 675, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
-  const pic = await loadPic(h.ghost ? 'assets/chogs/apprentice.png' : h.img).catch(() => null);
-  const mons = Object.fromEntries(await Promise.all(Object.keys(KIND_NAME).map(async (kd) => [kd, await loadPic(`assets/monsters/${kd}.png`).catch(() => null)])));
+  const pic = await loadPic(h.ghost ? 'assets/chogs/apprentice.webp' : h.img).catch(() => null);
+  const mons = Object.fromEntries(await Promise.all(Object.keys(KIND_NAME).map(async (kd) => [kd, await loadPic(`assets/monsters/${kd}.webp`).catch(() => null)])));
   c.fillStyle = '#0e0b1a'; c.fillRect(0, 0, W, H);
   const g = c.createRadialGradient(260, 340, 0, 260, 340, 520); g.addColorStop(0, E.color + '55'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
   // the Chog, framed, on the left
@@ -607,7 +607,7 @@ async function shareStory(h) {
 // the glowing figure in the hero: the Wannabe as a cut-out, a real Chog as a lit card
 function renderHeroHunter() {
   const h = current, box = $('#cine-hunter'); if (!box) return;
-  box.innerHTML = h.ghost ? `<img class="cut" src="assets/chogs/apprentice.png" alt="The Wannabe Chog"><b>Wannabe Chog</b>` : `<img class="nft" src="${img(h.img)}" alt="${esc(h.name)}"><b>${esc(h.name)}</b>`;
+  box.innerHTML = h.ghost ? `<img class="cut" src="assets/chogs/apprentice.webp" alt="The Wannabe Chog"><b>Wannabe Chog</b>` : `<img class="nft" src="${img(h.img)}" alt="${esc(h.name)}"><b>${esc(h.name)}</b>`;
 }
 const renderAll = () => { renderMe(); renderHunters(); renderBoard(); renderJournal(); renderHeroHunter(); renderEarn(); renderLeaderboard(); };
 
@@ -1154,8 +1154,8 @@ function showResult(m, res, gain, close) {
   if (res.win) {
     rewardCan($('#reward-can'), m.reward).then((stop) => { stopCan = stop; }).catch(() => {});
     const P = POTIONS[m.reward], E = ELEMENTS[m.weak];
-    const card = { hunterName: current.name, hunterImg: current.ghost ? 'assets/chogs/apprentice.png' : current.img, cutout: !!current.ghost,
-      monsterName: m.name, monsterImg: `assets/monsters/${m.kind in MON_COLOR ? m.kind : 'wraith'}.png`, quote: m.quote, turns: res.turns,
+    const card = { hunterName: current.name, hunterImg: current.ghost ? 'assets/chogs/apprentice.webp' : current.img, cutout: !!current.ghost,
+      monsterName: m.name, monsterImg: `assets/monsters/${m.kind in MON_COLOR ? m.kind : 'wraith'}.webp`, quote: m.quote, turns: res.turns,
       weakName: E.name, weakColor: E.color, potionName: P.name, potionColor: P.color, level: prog(current).level, bounty: gain.chog };
     let cv = null;
     const pop = $('#share-pop'), msg = $('#share-msg');
@@ -1436,7 +1436,7 @@ function renderTrips() {
       const back = new Date(now + tr.hours * (fastMode() ? 60 : 3600) * 1000);
       return `<li class="tr-card open">${head('Planning a trip', 'plan')}
         <p class="tr-step">Where to</p>
-        <div class="tr-places">${places.map((x) => `<button type="button" class="tr-place" data-place="${x.id}" aria-pressed="${planning.place === x.id}">${x.kind ? `<img src="assets/monsters/${x.kind}.png" alt="">` : '<i class="tr-yard">🏡</i>'}<b>${x.name}</b><small>${x.blurb}</small>${x.weak && x.weak === el ? `<em>${ELEMENTS[el].name} fits</em>` : ''}</button>`).join('')}</div>
+        <div class="tr-places">${places.map((x) => `<button type="button" class="tr-place" data-place="${x.id}" aria-pressed="${planning.place === x.id}">${x.kind ? `<img src="assets/monsters/${x.kind}.webp" alt="">` : '<i class="tr-yard">🏡</i>'}<b>${x.name}</b><small>${x.blurb}</small>${x.weak && x.weak === el ? `<em>${ELEMENTS[el].name} fits</em>` : ''}</button>`).join('')}</div>
         ${h.ghost ? '<p class="tr-note">The Wannabe only explores the backyard. Real Chogs go further.</p>' : ''}
         <p class="tr-step">How long</p>
         <div class="tr-seg" role="group">${TRIP_LENGTHS.map((x) => `<button type="button" data-len="${x.id}" aria-pressed="${planning.trip === x.id}"><b>${x.hours} ${unit}</b><small>${x.id === 'short' ? 'Safe' : x.id === 'mid' ? 'Some risk' : 'Risky · big haul'}</small></button>`).join('')}</div>
@@ -1510,7 +1510,7 @@ function paintTripMap() {
   const h = mapH, t = h && prog(h).trip; if (!t) { closeTripMap(); return; }
   const place = TRIP_PLACES.find((x) => x.id === t.place), now = Date.now(), back = tripBack(t), ch = t.choice;
   const asking = !back && now >= ch.at && !ch.pick, last = [...t.diary].filter((d) => d.at <= now).pop();
-  const pic = h.ghost ? 'assets/chogs/apprentice-face.png' : (/^(https:\/\/|assets\/)/.test(h.img || '') ? h.img : null);
+  const pic = h.ghost ? 'assets/chogs/apprentice-face.webp' : (/^(https:\/\/|assets\/)/.test(h.img || '') ? h.img : null);
   const f = Math.min(1, (now - t.start) / (t.end - t.start)), where = back ? 'Back at the lodge' : f < 0.3 ? `On the road to ${place.name}` : f < 0.7 ? `Exploring ${place.name}` : 'Heading home';
   $('#tmap-body').innerHTML = `<div class="tm-head"><div><p class="eyebrow">Expedition</p><h3 id="tmap-title">${esc(h.name)} · ${esc(place.name)}</h3></div><span class="tr-pill ${back ? 'back' : 'away'}">${back ? 'Back!' : `${esc(where)} · ${dur(tripLeft(t))} left`}</span></div>
     <div class="tm-stage${asking ? ' asking' : ''}">${tripMapSvg({ t, place, h: { name: h.name, img: pic, ghost: !!h.ghost }, places: TRIP_PLACES, now, night: skyNow() === 'night' })}
@@ -1719,7 +1719,7 @@ if (LAB) {
       return { el: st.kit.element, ...openHunt({ hunter: h, level: 1, stats: st, monster: m, art: h.ghost ? APPR_ARENA : art(h), beast: monsterArt(m.kind, true), monColor: MON_COLOR[m.kind] || MON_COLOR.wraith, bag: [3, 3, 3], lab: true, onFinish: () => {} }) };
     },
   }));
-} else if ($('#gate')) startGateLines($('#gate-lines')), startGate({ gate: $('#gate'), canvas: $('#gate-gl'), pctEl: $('#gate-pct'), tagEl: $('#gate-tag'), hunters: [...gateMine, ...gateSpare].slice(0, Math.max(2, gateMine.length)), spare: gateSpare, welcome: gateOwned.length ? (gateOwned.length > 1 ? `Your ${gateOwned.length} Chogs are waiting` : 'Your Chog is waiting') : '', whale: gateOwned.length >= WHALE ? gateOwned.length : 0, boss: { name: BOSS.name, img: 'assets/monsters/wyrm.png' }, onDone: startMotion });
+} else if ($('#gate')) startGateLines($('#gate-lines')), startGate({ gate: $('#gate'), canvas: $('#gate-gl'), pctEl: $('#gate-pct'), tagEl: $('#gate-tag'), hunters: [...gateMine, ...gateSpare].slice(0, Math.max(2, gateMine.length)), spare: gateSpare, welcome: gateOwned.length ? (gateOwned.length > 1 ? `Your ${gateOwned.length} Chogs are waiting` : 'Your Chog is waiting') : '', whale: gateOwned.length >= WHALE ? gateOwned.length : 0, boss: { name: BOSS.name, img: 'assets/monsters/wyrm.webp' }, onDone: startMotion });
 else startMotion();
 // motion: each section rises in the first time it scrolls into view; its cards animate once, then stay still
 // (it starts when you walk through the lodge door, so nothing plays unseen behind the intro)

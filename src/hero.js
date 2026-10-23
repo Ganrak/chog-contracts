@@ -58,8 +58,8 @@ export function startHero({ el, monsterFromPost, getHunter, elements, onHunt, on
         const t = SAMPLES[i % SAMPLES.length]; i += 1;
         const m = monsterFromPost(t), h = getHunter(); current = { text: t, monster: m };
         // load the next pictures before they're needed
-        monImg.src = `assets/monsters/${m.kind}.png`;
-        chogImg.src = h.ghost ? 'assets/chogs/apprentice.png' : h.img; chogImg.classList.toggle('pix', !!h.ghost);
+        monImg.src = `assets/monsters/${m.kind}.webp`;
+        chogImg.src = h.ghost ? 'assets/chogs/apprentice.webp' : h.img; chogImg.classList.toggle('pix', !!h.ghost);
         chogName.textContent = h.name;
         monName.textContent = m.name;
         q('.h-quote').textContent = `“${t}”`;
