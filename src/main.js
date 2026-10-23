@@ -15,7 +15,7 @@ import { startHero } from './hero.js';
 import { PLACES as TRIP_PLACES, TRIPS as TRIP_LENGTHS, SNACKS as TRIP_SNACKS, fastMode, setFastMode, planTrip, tripLeft, tripBack, tripResult } from './expedition.js';
 import { tripMapSvg } from './tripmap.js';
 import { rentalLog, demoOwnerStats, loadPaid, savePaid } from './rental.js';
-import { wannabeLine, SLOTS as ROOM_SLOTS, ITEMS as ROOM_ITEMS, PAINTS as ROOM_PAINTS, COLORS as ROOM_COLORS, loadRoom, saveRoom, owns, fits } from './room.js';
+import { wannabeLine, SLOTS as ROOM_SLOTS, ITEMS as ROOM_ITEMS, PAINTS as ROOM_PAINTS, COLORS as ROOM_COLORS, THEMES as ROOM_THEMES, themeOf, loadRoom, saveRoom, owns, fits } from './room.js';
 import { readChog, walletChogs, tokenBalanceOf } from './chain.js';
 import { startGlow } from './glow.js';
 import { startGateLines } from './gatelines.js';import { play as sfx, sfxOn, setSfx } from './sfx.js';
@@ -58,7 +58,7 @@ const MON_COLOR = { ghoul: '#7FA35B', troll: '#A08C55', thief: '#7A63B8', golem:
 // hand-drawn enemies (cut from one ChatGPT sheet by scripts/cut-sheet.ps1); harpy and wyrm face right, so the arena mirrors them
 // in the arena each enemy is its attack strip (scripts/cut-frames.ps1): 300 px per frame, height per enemy
 const STRIP_H = { ghoul: 248, troll: 227, thief: 218, golem: 230, harpy: 213, wyrm: 202, wraith: 198 };
-const STRIP_FLIP = new Set(['wyrm']); // the wyrm breathes to the right in the sheet
+const STRIP_FLIP = new Set(['wyrm', 'harpy']); // these two face right in their sheets: mirrored so they face the Chog
 const monsterArt = (kind, inArena = false) => {
   const k = kind in MON_COLOR ? kind : 'wraith';
   if (!inArena) return `<img class="mon" src="assets/monsters/${k}.webp" alt="">`;
@@ -1370,8 +1370,11 @@ const skyNow = () => { const o = lightPick(); if (o !== 'auto') return o; const 
 function renderDeco() {
   const stats = roomStats(), placedIds = Object.values(room.slots);
   if (!posterURL || posterFor !== (ownChog() || SAMPLES[0]).id) makePoster();
-  $('#r-sky').className = `r-sky ${skyNow()}`;
-  $('#r-paints').innerHTML = Object.entries(room.paint).filter(([part, c]) => ROOM_PAINTS[part] && c && c !== 'purple').map(([part, c]) => { const b = ROOM_PAINTS[part].box;
+  // the room theme: its painting behind everything; the time-of-day sky and the curtain colours belong to the classic room only
+  const th = themeOf(room), classic = th.id === 'classic';
+  $('#room-stage').style.backgroundImage = classic ? '' : `url("${th.img}")`; $('#room-stage').dataset.theme = th.id;
+  $('#r-sky').className = classic ? `r-sky ${skyNow()}` : 'r-sky'; $('#r-sky').hidden = !classic;
+  $('#r-paints').innerHTML = !classic ? '' : Object.entries(room.paint).filter(([part, c]) => ROOM_PAINTS[part] && c && c !== 'purple').map(([part, c]) => { const b = ROOM_PAINTS[part].box;
     return `<img src="assets/room/${ROOM_PAINTS[part].dir}/${c}.png" alt="" style="left:${b[0]}%;top:${b[1]}%;width:${b[2]}%;height:${b[3]}%">`; }).join('');
   $('#r-slots').innerHTML = ROOM_SLOTS.map((s) => { const it = itemById(room.slots[s.id]);
     return `<button type="button" class="r-slot${it ? '' : ' empty'}${selSlot === s.id ? ' sel' : ''}" data-slot="${s.id}" style="--x:${s.x};--y:${s.y};--h:${s.h}" aria-label="${it ? `${esc(it.name)} on the ${s.label.toLowerCase()}, click to take it down` : `Empty spot: ${s.label.toLowerCase()}`}">${it ? itemArt(it) : ''}</button>`; }).join('');
@@ -1384,11 +1387,13 @@ function renderDeco() {
   if (!decoOpen) { $('#r-deco').innerHTML = ''; return; } // shut: just the two round buttons on the room (camera, gear)
   $('#r-deco').innerHTML = `<div class="row"><h3>Decorate</h3><span class="bal">${fmtChog(chogBalance())} test $CHOG</span><button type="button" class="btn ghost" data-deco-close>Done</button></div>
     <p>${sel ? `Pick something for the ${sel.label.toLowerCase()}.` : 'Click an item to put it in the room, or a spot in the room first. Pictures go on the wall. Click an item in the room to take it down.'}</p>
+    <div class="r-themes" role="group" aria-label="Room theme">${ROOM_THEMES.map((t) => { const have = !t.price || room.bought.includes(`theme-${t.id}`), on = th.id === t.id;
+      return `<button type="button" class="r-theme${on ? ' on' : ''}${have ? '' : ' shop'}" data-theme="${t.id}" aria-pressed="${on}"><span style="background-image:url(${t.img})"></span><b>${esc(t.name)}</b><small>${on ? 'Your room' : have ? 'Move in' : `Buy · ${fmtChog(t.price)} test $CHOG`}</small></button>`; }).join('')}</div>
     <div class="r-items">${shown.map((it) => { const have = owns(it, room, stats), on = placedIds.includes(it.id);
       const state = on ? 'placed' : have ? '' : it.price ? 'shop' : 'locked';
       const note = on ? 'In the room' : have ? (it.wall ? 'Hang it up' : 'Put it up') : it.price ? `Buy · ${fmtChog(it.price)} test $CHOG` : it.earn.hint;
       return `<button type="button" class="r-item ${state}" data-item="${it.id}" ${state === 'locked' ? 'aria-disabled="true"' : ''}>${itemArt(it)}<b>${esc(it.name)}</b><small>${esc(note)}</small></button>`; }).join('')}</div>
-    ${paintRow('curtains')}${fastMode() ? `<div class="r-paint-row"><b>Light (test)</b>${[['auto', 'Auto'], ['day', 'Morning'], ['dusk', 'Evening'], ['night', 'Night']].map(([v, l]) => `<button type="button" class="r-light" data-light="${v}" aria-pressed="${lightPick() === v}">${l}</button>`).join('')}</div>` : ''}
+    ${classic ? paintRow('curtains') : ''}${fastMode() ? `<div class="r-paint-row"><b>Light (test)</b>${[['auto', 'Auto'], ['day', 'Morning'], ['dusk', 'Evening'], ['night', 'Night']].map(([v, l]) => `<button type="button" class="r-light" data-light="${v}" aria-pressed="${lightPick() === v}">${l}</button>`).join('')}</div>` : ''}
     <div class="acts"><button type="button" class="btn ghost" id="r-faucet" title="Demo only: test tokens, worth nothing">+10,000 test $CHOG</button></div>`;
 }
 // the room's two corner buttons: snap a photo, and the gear that opens decorating
@@ -1406,6 +1411,15 @@ $('#r-deco').addEventListener('click', (e) => {
   const lb = e.target.closest('[data-light]');
   if (lb) { try { localStorage.setItem(LIGHT_KEY, lb.dataset.light); } catch {} sfx('click'); renderDeco(); return; }
   if (e.target.closest('#r-faucet')) { grantChog(10000); sfx('coin'); renderMe(); renderDeco(); kidSay('Ooh, shiny test tokens! Let\'s go shopping.'); return; }
+  const tb = e.target.closest('[data-theme]');
+  if (tb) { // move into another room theme: bought once with test $CHOG, then free to switch back and forth
+    const t = ROOM_THEMES.find((x) => x.id === tb.dataset.theme); if (!t) return;
+    if (t.price && !room.bought.includes(`theme-${t.id}`)) {
+      if (!spendChog(t.price)) { kidSay(`The ${t.name} costs ${fmtChog(t.price)} test $CHOG. Go hunt something!`); return; }
+      room.bought.push(`theme-${t.id}`); sfx('coin'); renderMe(); kidSay(`We moved into the ${t.name}!`);
+    }
+    room.theme = t.id; saveRoom(room); sfx('click'); renderDeco(); return;
+  }
   const p = e.target.closest('[data-paint]');
   if (p) { // rug / curtain colours: purple is the painting, the rest are bought once
     const [part, c] = p.dataset.paint.split(':'), key = `${part}-${c}`;
@@ -1433,7 +1447,7 @@ $('#r-deco').addEventListener('click', (e) => {
 async function shareRoom() {
   const st = $('#room-stage'), W = 1200, H = Math.round(W * 941 / 1672), cv = document.createElement('canvas'); cv.width = W; cv.height = H + 64;
   const c = cv.getContext('2d'), load = (src) => loadPic(src).catch(() => null), box = (el) => { const r = el.getBoundingClientRect(), s = st.getBoundingClientRect(); return [(r.left - s.left) / s.width * W, (r.top - s.top) / s.height * H, r.width / s.width * W, r.height / s.height * H]; };
-  const bg = await load('assets/room/room.jpg'); if (bg) c.drawImage(bg, 0, 0, W, H);
+  const bg = await load(themeOf(room).img); if (bg) c.drawImage(bg, 0, 0, W, H);
   const sky = $('#r-sky'); if (!sky.classList.contains('night')) { const [x, y, w, h] = box(sky); const g = c.createLinearGradient(0, y, 0, y + h); if (sky.classList.contains('day')) { g.addColorStop(0, '#7cc4ff'); g.addColorStop(1, '#bfe6ff'); } else { g.addColorStop(0, '#5b3f8f'); g.addColorStop(0.6, '#e0727a'); g.addColorStop(1, '#ffb36b'); } c.fillStyle = g; c.fillRect(x, y, w, h); }
   for (const el of st.querySelectorAll('.r-slot .pframe, .r-slot .poster')) { const [x, y, w, h] = box(el); c.fillStyle = el.classList.contains('poster') ? '#f2ead8' : '#6e4a2c'; c.fillRect(x, y, w, h); }
   for (const el of st.querySelectorAll('.r-paints img, .r-sleepers img, .r-slot img, .r-kid img')) { const im = await load(el.src); if (!im) continue; const [x, y, w, h] = box(el); c.drawImage(im, x, y, w, h); }

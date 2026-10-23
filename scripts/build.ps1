@@ -21,7 +21,7 @@ Copy-Item "$root\assets\monsters\*.webp" "$out\assets\monsters\"         # webp 
 Copy-Item "$root\assets\monsters\attack\*.webp" "$out\assets\monsters\attack\"
 Copy-Item "$root\assets\chogs\*.webp", "$root\assets\chogs\close-*-sm.png" "$out\assets\chogs\"  # NFT art (512 px) + the Apprentice cut-outs and strips + small strip thumbnails
 Copy-Item "$root\assets\brand\*.png", "$root\assets\brand\*.jpg" "$out\assets\brand\"  # official Chog logo from chog.xyz/brand + the link-preview picture
-Copy-Item "$root\assets\room\*.jpg" "$out\assets\room\"      # the painted Wannabe's Room
+Copy-Item "$root\assets\room\*.jpg", "$root\assets\room\*.webp" "$out\assets\room\"  # the painted Wannabe's Room and its themes
 Copy-Item "$root\assets\map\*.webp" "$out\assets\map\"       # the painted expedition map
 Copy-Item "$root\assets\arcade\*.webp" "$out\assets\arcade\" # the painted arcade room
 'ghoul', 'troll', 'thief', 'golem', 'harpy', 'wraith', 'boss' | ForEach-Object { Copy-Item "$root\assets\arena\$_.webp" "$out\assets\arena\" }  # painted arenas (not the source sheet or PNG)

@@ -215,18 +215,23 @@ export function openHunt({ hunter, level, stats, monster, art, beast, monColor, 
     if (reduce()) return;
     const ar = arena.getBoundingClientRect();
     const pts = life.eyes().map((p) => ({ x: p.x - ar.left, y: p.y - ar.top }));
-    for (const p of pts) { // a flare on each eye
-      const fl = document.createElement('div'); fl.className = 'flare'; fl.style.setProperty('--oc', color);
-      fl.style.left = `${p.x}px`; fl.style.top = `${p.y}px`; fx.appendChild(fl); setTimeout(() => fl.remove(), 750);
+    for (const p of pts) { // the eyes charge up first: a white-hot flare with spinning spikes
+      const fl = document.createElement('div'); fl.className = 'flare charge'; fl.style.setProperty('--oc', color);
+      fl.style.left = `${p.x}px`; fl.style.top = `${p.y}px`; fx.appendChild(fl); setTimeout(() => fl.remove(), 1000);
     }
-    await Promise.all(pts.map((p) => ray(null, to, color, p, 15)));
+    await wait(240);
+    await Promise.all(pts.map((p) => ray(null, to, color, p, 18)));
+    // where the beams land: a spray of sparks in the laser's colour and white
+    const hit = center(to);
+    burst(null, { n: 16, color, spread: 120, up: 20, dur: 520, size: [5, 11], at: hit });
+    burst(null, { n: 8, color: '#ffffff', spread: 80, dur: 420, size: [4, 8], at: hit });
   }
   async function ray(from, to, color, origin, thick) {
     if (reduce()) return;
     const a = origin || center(from), b = center(to), r = document.createElement('div');
     if (thick) { r.style.height = `${thick}px`; r.style.marginTop = `${-thick / 2}px`; }
     const len = Math.hypot(b.x - a.x, b.y - a.y), ang = Math.atan2(b.y - a.y, b.x - a.x);
-    r.className = 'ray'; r.style.setProperty('--oc', color); r.style.left = `${a.x}px`; r.style.top = `${a.y}px`; r.style.width = `${len}px`;
+    r.className = thick ? 'ray beam' : 'ray'; r.style.setProperty('--oc', color); r.style.left = `${a.x}px`; r.style.top = `${a.y}px`; r.style.width = `${len}px`;
     fx.appendChild(r);
     const anim = r.animate([{ transform: `rotate(${ang}rad) scaleX(0)`, opacity: 1 }, { transform: `rotate(${ang}rad) scaleX(1)`, opacity: 1, offset: 0.4 }, { transform: `rotate(${ang}rad) scaleX(1)`, opacity: 0 }], { duration: 650, easing: 'ease-out' });
     await settled(anim, 650);

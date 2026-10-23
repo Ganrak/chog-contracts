@@ -70,6 +70,13 @@ export const ITEMS = [
 export const PAINTS = {
   curtains: { name: 'Curtains', dir: 'curtains', box: [86.54, 4.04, 7.00, 40.06], price: 1000 },
 };
+/* room themes: the same layout (shelf, wall, window, bed, floor) painted as a different room, bought once */
+export const THEMES = [
+  { id: 'classic', name: 'Classic room', img: 'assets/room/room.jpg', price: 0 },
+  { id: 'moonbase', name: 'Moon Base', img: 'assets/room/moonbase.webp', price: 10000 },
+  { id: 'treehouse', name: 'Treehouse', img: 'assets/room/treehouse.webp', price: 10000 },
+];
+export const themeOf = (room) => THEMES.find((t) => t.id === room.theme) || THEMES[0];
 export const COLORS = [['purple', '#8a5cd6'], ['red', '#c8323c'], ['teal', '#1fa69a'], ['gold', '#d9a227'], ['green', '#3f9a3a'], ['blue', '#3a6fd1']];
 
 const KEY = 'chog-contracts-room';
@@ -77,9 +84,9 @@ export function loadRoom() {
   try {
     const r = JSON.parse(localStorage.getItem(KEY));
     // spots that no longer exist (the old floor spot) give their item back
-    if (r && r.slots) return { bought: r.bought || [], slots: Object.fromEntries(Object.entries(r.slots).filter(([s]) => SLOTS.some((x) => x.id === s))), paint: r.paint || {} };
+    if (r && r.slots) return { bought: r.bought || [], slots: Object.fromEntries(Object.entries(r.slots).filter(([s]) => SLOTS.some((x) => x.id === s))), paint: r.paint || {}, theme: THEMES.some((t) => t.id === r.theme) ? r.theme : 'classic' };
   } catch {}
-  return { bought: [], slots: {}, paint: {} };
+  return { bought: [], slots: {}, paint: {}, theme: 'classic' };
 }
 export function saveRoom(r) { try { localStorage.setItem(KEY, JSON.stringify(r)); } catch {} }
 /** Does the player have this item? */

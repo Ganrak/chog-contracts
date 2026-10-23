@@ -400,6 +400,13 @@ a.mark, .foot a.mark{color:var(--fg); text-decoration:none; border:0; width:max-
 /* laser ultimates: a flare on each eye while the beams fire */
 .flare{position:absolute; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; pointer-events:none; background:radial-gradient(circle, #fff 0 18%, var(--oc) 40%, transparent 70%); box-shadow:0 0 30px 10px var(--oc); animation:flare .7s ease-out forwards}
 @keyframes flare{0%{transform:scale(.3); opacity:0} 20%{transform:scale(1.3); opacity:1} 100%{transform:scale(.8); opacity:0}}
+/* laser eyes, charging: a white-hot core with spinning star spikes, growing before the beams fire */
+.flare.charge{width:64px; height:64px; margin:-32px 0 0 -32px; animation:flareCharge .95s ease-out forwards}
+.flare.charge::before{content:""; position:absolute; inset:-60%; border-radius:50%; pointer-events:none;
+  background:repeating-conic-gradient(from 0deg, transparent 0 13deg, rgba(255,255,255,.95) 15deg, transparent 17deg 30deg);
+  -webkit-mask:radial-gradient(circle, #000 18%, transparent 62%); mask:radial-gradient(circle, #000 18%, transparent 62%); animation:flareSpin .9s linear forwards}
+@keyframes flareCharge{0%{transform:scale(.2); opacity:0} 25%{transform:scale(.9); opacity:1} 45%{transform:scale(1.25)} 80%{transform:scale(1.05); opacity:1} 100%{transform:scale(.7); opacity:0}}
+@keyframes flareSpin{to{transform:rotate(200deg)}}
 .standee.holo::before{content:""; position:absolute; inset:0; z-index:2; pointer-events:none; mix-blend-mode:overlay; background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,.55) 44%, rgba(150,220,255,.45) 50%, rgba(255,160,235,.4) 56%, transparent 70%); background-size:260% 100%; animation:holo 3.6s linear infinite}
 @keyframes holo{from{background-position:160% 0} to{background-position:-110% 0}}
 .standee.hurt img{filter:brightness(1.3) sepia(1) saturate(5) hue-rotate(-28deg)}
@@ -446,6 +453,14 @@ a.mark, .foot a.mark{color:var(--fg); text-decoration:none; border:0; width:max-
 @keyframes pop{0%{opacity:0; transform:translate(-50%,0) scale(.6)} 15%{opacity:1; transform:translate(-50%,-16px) scale(1.15)} 100%{opacity:0; transform:translate(-50%,-80px) scale(1)}}
 .orb{position:absolute; width:26px; height:26px; margin:-13px 0 0 -13px; border-radius:50%; background:radial-gradient(circle, #fff, var(--oc) 45%, transparent 72%); box-shadow:0 0 24px var(--oc)}
 .ray{position:absolute; height:16px; margin-top:-8px; border-radius:8px; background:linear-gradient(90deg, var(--oc), #fff); box-shadow:0 0 34px var(--oc); transform-origin:0 50%}
+/* a laser beam: coloured body, white-hot core, energy ripples running along it, a slight flicker */
+.ray.beam{border-radius:999px; background:linear-gradient(90deg, color-mix(in srgb, var(--oc) 55%, #fff), var(--oc) 18%, var(--oc) 82%, color-mix(in srgb, var(--oc) 40%, #fff));
+  box-shadow:0 0 10px 2px var(--oc), 0 0 34px 10px color-mix(in srgb, var(--oc) 55%, transparent); animation:beamFlick .09s steps(2) infinite}
+.ray.beam::before{content:""; position:absolute; left:2%; right:0; top:32%; bottom:32%; border-radius:999px; background:#fff; box-shadow:0 0 6px 1px #fff}
+.ray.beam::after{content:""; position:absolute; inset:-4px 0; border-radius:999px; background:repeating-linear-gradient(90deg, transparent 0 16px, rgba(255,255,255,.6) 16px 22px, transparent 22px 40px); opacity:.75; animation:beamFlow .22s linear infinite}
+@keyframes beamFlow{from{background-position:0 0} to{background-position:40px 0}}
+@keyframes beamFlick{50%{filter:brightness(1.35) saturate(1.2)}}
+@media (prefers-reduced-motion:reduce){ .ray.beam, .ray.beam::after, .flare.charge, .flare.charge::before{animation:none} }
 .ring{position:absolute; width:240px; height:70px; margin:-35px 0 0 -120px; border-radius:50%; border:3px solid var(--bad); background:radial-gradient(closest-side, rgba(226,51,61,.4), rgba(226,51,61,.04)); animation:ring .65s ease-in forwards}
 @keyframes ring{0%{opacity:0; transform:scale(1.5)} 100%{opacity:1; transform:scale(1)}}
 .bubble{position:absolute; inset:-12px; border-radius:26px; border:3px solid #8FD3FF; box-shadow:0 0 30px rgba(143,211,255,.55) inset, 0 0 26px rgba(143,211,255,.5); animation:ring .3s ease-out forwards}
@@ -1141,9 +1156,8 @@ body:has(.hunt:not([hidden])) .dock button::before{bottom:auto; top:calc(100% + 
 .hero-forge input{flex:1; min-width:0; border:0; background:none; color:var(--fg); font:15px var(--body); padding:10px 12px}
 .hero-forge input:focus{outline:none} .hero-forge:focus-within{border-color:#e845a4; box-shadow:0 0 0 4px rgba(232,69,164,.2), 0 10px 30px rgba(0,0,0,.35)}
 .hero-forge .btn{flex:none; white-space:nowrap}
-.hero-free{margin:16px 0 0; font:600 12px/1.3 var(--mono); letter-spacing:.06em; color:#8af0b0}
 @media (max-width:520px){ .hero-forge{flex-direction:column} .hero-forge .btn{width:100%} }
-@media (prefers-reduced-motion:no-preference){ .hero .hero-forge, .hero .hero-free{animation:heroIn .7s ease .45s both} html:not(.entered) :is(.hero .hero-forge, .hero .hero-free){animation-play-state:paused} html.intro-seen :is(.hero .hero-forge, .hero .hero-free){animation:none} }
+@media (prefers-reduced-motion:no-preference){ .hero .hero-forge{animation:heroIn .7s ease .45s both} html:not(.entered) :is(.hero .hero-forge){animation-play-state:paused} html.intro-seen :is(.hero .hero-forge){animation:none} }
 .hunter .feats{margin:0; font-size:13px; line-height:1.5; color:var(--muted)} .hunter .feats b{color:var(--fg); font-weight:700}
 /* why these moves: Q W E R, the move, and the trait it came from */
 .hunter > .why{grid-column:1 / -1}
@@ -1334,6 +1348,14 @@ body.tab-room .wrap > section:not(#room){display:none}
 .r-deco .bal{font:700 13px/1 var(--mono); color:#ffd43b}
 .r-deco p{margin:0; color:var(--muted); font-size:14px}
 .r-items{display:grid; grid-template-columns:repeat(auto-fill, minmax(116px, 1fr)); gap:10px}
+/* room themes: a picture of each room to move into */
+.r-themes{display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:10px; margin-bottom:12px}
+.r-theme{display:flex; flex-direction:column; gap:4px; padding:6px 6px 9px; border-radius:14px; border:1px solid var(--line); background:var(--night-3); color:var(--fg); cursor:pointer; text-align:left}
+.r-theme span{display:block; aspect-ratio:16/9; border-radius:9px; background:#2a1d33 center/cover no-repeat}
+.r-theme b{padding:0 4px; font:400 16px/1.1 var(--display); letter-spacing:.04em}
+.r-theme small{padding:0 4px; font:600 11px/1.2 var(--mono); color:var(--muted)}
+.r-theme.shop small{color:#ffd43b} .r-theme.on{border-color:var(--pink); box-shadow:0 0 0 2px rgba(232,69,164,.35)} .r-theme.on small{color:#8af0b0}
+.r-theme:hover{border-color:var(--pink)}
 .r-item{display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 8px; border-radius:14px; border:1px solid var(--line); background:var(--night-3); color:var(--fg); cursor:pointer; text-align:center}
 .r-item img{height:56px; width:auto; max-width:100%; object-fit:contain; filter:drop-shadow(0 4px 4px rgba(0,0,0,.5))}
 .r-item b{font:600 12.5px/1.2 var(--body)} .r-item small{font:600 11px/1.2 var(--mono); color:var(--muted)}
@@ -1721,7 +1743,6 @@ body.unbox .tr-card{background:rgba(255,255,255,.025)}
       <p class="eyebrow">Chogathon 2026 · playable demo</p>
       <h1 id="hero-title">FUD is a monster.<span>Your Chog hunts it.</span></h1>
       <p class="lede">Someone on X says Monad is dead. Now it's a monster. Send your Chog.</p>
-      <p class="hero-free">Free to play · no wallet needed · nothing to sign</p>
       <p class="hero-hook"><button type="button" data-hook="hire">No Chog? Hire one.</button><button type="button" data-hook="earn">Have one? It earns for you.</button></p>
       <div class="lineup" aria-hidden="true"><img src="assets/monsters/ghoul.webp" alt=""><img src="assets/monsters/thief.webp" alt=""><img src="assets/monsters/troll.webp" alt=""><img src="assets/monsters/wyrm.webp" alt="" class="big"><img src="assets/monsters/golem.webp" alt=""><img src="assets/monsters/harpy.webp" alt=""><img src="assets/monsters/wraith.webp" alt=""></div>
     </div>
