@@ -122,8 +122,9 @@ const toBlob = (cv) => new Promise((res) => { try { cv.toBlob((b) => res(b), 'im
 
 /** The post text, with the site link only when we're on a real address (not a preview). */
 export function shareText(o) {
-  const link = /^https?:$/.test(location.protocol) && !/claude\.ai|claudeusercontent|localhost/.test(location.hostname) ? `\n${location.origin}${location.pathname}` : '';
-  return `My ${o.hunterName} just hunted the ${o.monsterName}\nFUD: “${o.quote}”\nYour Chog is a monster hunter too. @ChogNFT #Chogathon${link}`;
+  // the link is a dare: whoever opens it meets the same FUD monster on their own board
+  const link = /^https?:$/.test(location.protocol) && !/claude\.ai|claudeusercontent|localhost/.test(location.hostname) ? `\n${location.origin}${location.pathname}?fud=${encodeURIComponent(String(o.quote || '').slice(0, 280))}` : '';
+  return `My ${o.hunterName} just debunked the ${o.monsterName}\nFUD: “${o.quote}”\nThink your Chog can do it? @ChogNFT #Chogathon${link}`;
 }
 
 /** Phones: share sheet with the image. Desktop: save the image, then open a ready post on X. Returns what happened. */

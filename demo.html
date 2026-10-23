@@ -757,6 +757,9 @@ html.lab-on .hunt{right:270px} /* the lab gets its own column, so it never cover
 .d-auto input{accent-color:#ffd66b; width:16px; height:16px}
 .contract .btn.auto{font-size:11.5px; line-height:1.25; white-space:normal}
 .hint-best{background:none; border:0; padding:0; color:#ffd66b; font:600 12px/1.4 var(--mono); text-align:left; cursor:pointer; text-decoration:underline; text-underline-offset:3px}
+.hint-dare{background:none; border:0; padding:0; color:#f39ad0; font:600 12px/1.4 var(--mono); text-align:left; cursor:pointer; text-decoration:underline; text-underline-offset:3px} /* copies a ?fud= link that drops this monster on a friend's board */
+.hint-dare::before{content:"⚔ "}
+#toast a{color:#ffd66b; font-weight:700} #toast .dare-url{display:block; margin:4px 0; font:500 11px/1.3 var(--mono); word-break:break-all; user-select:all; color:#c9bfff}
 /* (mobile: the stable grid stays a grid, not the swipe row) */
 @media (max-width:560px){ .hunters.is-stable{display:flex; overflow:visible; margin-inline:0; padding-inline:0} .stable-grid{grid-template-columns:repeat(3, minmax(0,1fr))} }
 

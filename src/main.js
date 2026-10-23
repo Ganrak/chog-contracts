@@ -410,8 +410,9 @@ function renderBoard() {
       ${m.boss ? `<div class="shared"><div class="bar" style="--w:${(bossLeft * 100).toFixed(1)}%"><i></i></div><span>Everyone hits the same boss · weak spot changes every Monday (next: ${ELEMENTS[m.nextWeak]?.name || ''})</span></div>` : ''}
       <div class="odds">${chogOnly ? '<div><span>Needs a Chog</span></div>' : locked ? `<div><span>Unlocks at level ${m.unlock}</span></div>` : `<div title="How often your hunter wins this on autopilot. Playing it yourself does better."><b style="color:${col}">${pct}%</b> <span>win chance</span></div>`}<span class="bounty">${fmtChog(bounty(m))} test $CHOG</span></div>
       ${note && !chogOnly ? `<p class="lv">${esc(note)}</p>` : ''}
-      ${chogOnly ? `<p class="lv lock-why">The Wannabe only takes quiet FUD (level 1-2). This one is loud: it needs a real Chog, yours or a hired one.</p>${hire ? `<button type="button" class="hint-hire" data-scroll-hire="${hire.token}">Hire a Chog for this</button>` : ''}` : ''}
+      ${chogOnly ? `<p class="lv lock-why">${m.boss ? 'The weekly raid boss needs a real Chog, yours or a hired one.' : 'The Wannabe only takes quiet FUD (level 1-2). This one is loud: it needs a real Chog, yours or a hired one.'}</p>${hire ? `<button type="button" class="hint-hire" data-scroll-hire="${hire.token}">Hire a Chog for this</button>` : ''}` : ''}
       ${!chogOnly && mu.mult <= 1 && FOR_HIRE.some((c) => c.element === m.weak && !hoursLeft(c)) ? `<button type="button" class="hint-hire" data-scroll-hire="${FOR_HIRE.find((c) => c.element === m.weak).token}">No ${ELEMENTS[m.weak].name} Chog? Hire one</button>` : ''}
+      ${m.forge && !m.boss ? `<button type="button" class="hint-dare" data-dare="${i}">Dare a friend to debunk this FUD</button>` : ''}
       ${better && !auto ? `<button type="button" class="hint-best" data-best="${better.h.id}">Best for this: ${esc(better.h.name)} (${better.s.kit.elementInfo.name})</button>` : ''}
       ${preview ? '<button type="button" class="btn" data-verify>Connect wallet to play</button>' : `<button type="button" class="btn${auto ? ' auto' : ''}" data-hunt="${i}"${auto ? ` data-auto="${H.id}"` : ''} ${locked || hHurt || hAway ? 'disabled' : ''}>${chogOnly ? 'Chog only' : hAway ? (tripBack(prog(H).trip) ? 'Back! Unpack in the room' : 'On an expedition') : hHurt ? `Injured · ${dur(hHurt)}` : locked ? `Reach level ${m.unlock}` : auto ? `Hunt with ${esc(H.name)} · ${S.kit.elementInfo.name}` : 'Hunt'}</button>`}
     </article>`;
@@ -1066,6 +1067,30 @@ $('#compose').addEventListener('submit', (e) => {
   forge(text);
 });
 $('#post').addEventListener('input', previewFud);
+// a FUD dare: a link that drops the same monster on a friend's board (?fud=...); the address bar is cleaned right after
+const fudLink = (q) => `${location.origin}${location.pathname}?fud=${encodeURIComponent(String(q).slice(0, 280))}`;
+async function dare(m) {
+  const url = fudLink(m.quote), text = `I just turned this FUD into a monster: “${m.quote}”. Think your Chog can debunk it?`;
+  if (navigator.share && matchMedia('(pointer: coarse)').matches) { try { await navigator.share({ text, url }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+  // the clipboard can wait on page focus or a permission: never let that hold the message up
+  const copied = await Promise.race([navigator.clipboard?.writeText(url).then(() => true, () => false) ?? Promise.resolve(false), new Promise((r) => setTimeout(() => r(false), 900))]);
+  const x = `https://x.com/intent/post?text=${encodeURIComponent(text + ' @ChogNFT #Chogathon')}&url=${encodeURIComponent(url)}`;
+  toast(`${copied ? 'Dare link copied.' : `Your dare link: <code class="dare-url">${esc(url)}</code>`} Anyone who opens it meets this monster. <a href="${esc(x)}" target="_blank" rel="noopener">Post it on X</a>`);
+  sfx('click');
+}
+$('#board').addEventListener('click', (e) => { const d = e.target.closest('[data-dare]'); if (d) dare(contracts[Number(d.dataset.dare)]); });
+{
+  const q = new URLSearchParams(location.search).get('fud');
+  if (q != null) {
+    history.replaceState(null, '', location.pathname + location.hash); // one clean address, as always
+    const t = q.replace(/\s+/g, ' ').trim().slice(0, 280);
+    if (t) {
+      setTimeout(() => forge(t), 0); // after the whole script has run (the board needs helpers defined further down)
+      const greet = () => (document.getElementById('gate') ? setTimeout(greet, 500) : toast('A friend dared you: <b>debunk this FUD</b>. Its monster is on your board.'));
+      setTimeout(greet, 600);
+    }
+  }
+}
 // the hero's forge: same thing, first thing you see (empty? one of the sample posts)
 $('#hero-forge').addEventListener('submit', (e) => {
   e.preventDefault();
