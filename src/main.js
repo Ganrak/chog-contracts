@@ -222,10 +222,15 @@ setInterval(() => {
 let bossLeft = 0.62; // community health bar of the Wild Hunt (sample start)
 
 /* ---------- rendering ---------- */
+// the $CHOG holder badge: the connected wallet holds 10,000+ $CHOG (read from Monad, never a transaction)
+const HOLDER_MIN = 10000;
+let held = { wallet: null, amount: null };
+const isHolder = () => !!wAddr && held.wallet === wAddr.toLowerCase() && held.amount >= HOLDER_MIN;
 const avatar = (h) => (h.ghost ? APPR_FACE : `<img src="${img(h.img)}" alt="">`);
 function renderMe() {
   const st = hunterStats(current, prog(current)), p = prog(current);
-  $('#me').innerHTML = `<span class="av">${avatar(current)}<i class="dot${wAddr ? ' on' : ''}" title="${wAddr ? 'Wallet connected' : 'No wallet connected'}"></i></span>
+  $('#me').classList.toggle('is-holder', isHolder());
+  $('#me').innerHTML = `<span class="av">${avatar(current)}${isHolder() ? `<i class="dot coin" title="$CHOG Holder · ${fmtChog(held.amount)} $CHOG">$</i>` : `<i class="dot${wAddr ? ' on' : ''}" title="${wAddr ? 'Wallet connected' : 'No wallet connected'}"></i>`}</span>
     <div><b>${esc(current.name)}</b><br><span>Lv ${p.level} · Power ${st.power} · ${fmtChog(chogBalance())} test $CHOG</span></div><i class="caret" aria-hidden="true"></i>`;
   $('#me').setAttribute('aria-label', `Your account: hunting as ${current.name}, ${fmtChog(chogBalance())} test $CHOG${wAddr ? ', wallet connected' : ''}`);
   if (!$('#acct').hidden) renderAcct();
@@ -473,14 +478,11 @@ const BADGES = [
   ['Explorer', 'Come back from 5 expeditions', (p, hunts, trips) => trips.length >= 5],
   ['Veteran', 'Reach level 5', (p) => p.level >= 5],
 ];
-// the $CHOG holder badge: the connected wallet holds 10,000+ $CHOG (read from Monad, never a transaction)
-const HOLDER_MIN = 10000;
-let held = { wallet: null, amount: null };
 async function checkHolder() {
   const w = (wAddr || '').toLowerCase(); if (!w || held.wallet === w) return;
   held = { wallet: w, amount: null };
   try { held.amount = await tokenBalanceOf(POOL.token, w, POOL.decimals); } catch { held.amount = null; }
-  if (!$('#prof').hidden) renderJournal();
+  renderMe(); if (!$('#prof').hidden) renderJournal();
 }
 let badgesOpen = false; // the badge wall folds away; it remembers being open while the page is up
 document.addEventListener('toggle', (e) => { if (e.target.matches?.('[data-badges]')) badgesOpen = e.target.open; }, true);
@@ -488,7 +490,7 @@ function badgesHtml(p, log, h) {
   const hunts = log.filter((e) => !e.trip), trips = log.filter((e) => e.trip);
   const got = BADGES.map(([, , test]) => !!test(p, hunts, trips));
   const mine = !!wAddr && held.wallet === wAddr.toLowerCase() && !h.ghost && isOwned(h);
-  const holder = mine && held.amount >= HOLDER_MIN;
+  const holder = mine && isHolder();
   const chip = `<span class="holder${holder ? ' on' : ''}" title="${holder ? `This wallet holds ${fmtChog(held.amount)} $CHOG` : 'Hold 10,000+ $CHOG in the connected wallet'}">$CHOG Holder${holder ? '' : ' · 10k'}</span>`;
   return `<details class="badge-fold" data-badges${badgesOpen ? ' open' : ''}><summary><span class="j-h">Badges · ${got.filter(Boolean).length}/${BADGES.length}</span>${chip}<i aria-hidden="true"></i></summary>
     <div class="badges">${BADGES.map(([name, how], i) => `<span class="badge${got[i] ? ' got' : ''}" title="${esc(how)}"><b>${esc(name)}</b><small>${got[i] ? 'Earned' : esc(how)}</small></span>`).join('')}</div></details>`;
@@ -801,7 +803,7 @@ function paintConnect() {
   let out = $('#disconnect');
   if (!out) { out = document.createElement('button'); out.type = 'button'; out.id = 'disconnect'; out.className = 'btn ghost'; out.textContent = 'Disconnect'; out.addEventListener('click', () => $('#wdisc').click()); b.after(out); }
   out.hidden = !wAddr;
-  renderMe();
+  renderMe(); checkHolder(); // a $CHOG holder gets the gold ring once the balance is read
 }
 function wShow(step) { for (const s of ['pick', 'done', 'list']) $(`#wstep-${s}`).hidden = step !== s; }
 function openWallet() {
